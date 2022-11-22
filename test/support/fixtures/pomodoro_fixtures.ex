@@ -1,4 +1,6 @@
 defmodule ExPomodoro.Fixtures.PomodoroFixtures do
+  alias ExPomodoro.Pomodoro
+
   @moduledoc """
   This module defines test helpers for creating #{ExPomodoro.Pomodoro} structs.
   """
@@ -31,4 +33,19 @@ defmodule ExPomodoro.Fixtures.PomodoroFixtures do
   def update_attrs(attrs \\ %{}), do: attrs |> Enum.into(@update_attrs)
   @spec invalid_attrs(map()) :: map()
   def invalid_attrs(attrs \\ %{}), do: attrs |> Enum.into(@invalid_attrs)
+
+  @doc """
+  Given a map of attributes, creates a new #{Pomodoro} struct.
+  """
+  @spec new(map()) :: Pomodoro.t()
+  def new(attrs \\ %{}) do
+    attrs = Enum.into(attrs, valid_attrs(attrs))
+
+    opts =
+      attrs
+      |> Enum.into([])
+      |> Keyword.delete(:id)
+
+    Pomodoro.new(attrs.id, opts)
+  end
 end
