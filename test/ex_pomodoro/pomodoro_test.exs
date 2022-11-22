@@ -17,7 +17,6 @@ defmodule ExPomodoro.PomodoroTest do
       %{pomodoro: pomodoro}
     end
 
-    @tag :wip
     test "returns a #{Pomodoro} struct" do
       %{
         id: id,

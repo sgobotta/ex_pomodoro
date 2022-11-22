@@ -69,6 +69,7 @@ defmodule ExPomodoro.Pomodoro do
   @spec default_rounds() :: non_neg_integer()
   def default_rounds, do: @rounds
 
+  @spec parse_opts(pomodoro_opts()) :: pomodoro_opts()
   defp parse_opts(opts) do
     opts
     |> Keyword.put_new(:exercise_duration, default_exercise_duration())
