@@ -24,3 +24,12 @@ ex_pomodoro-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# Coverage
+/coverage/report/
+
+# Elixir ls
+.elixir_ls/
+
+# Env
+.env
