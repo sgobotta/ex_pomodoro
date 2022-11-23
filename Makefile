@@ -66,6 +66,18 @@ test.cover: SHELL:=/bin/bash
 test.cover:
 	@source ${LOCAL_ENV_FILE} && mix coveralls.html
 
+#🧪 test.cover.watch: @ Runs and watches all tests and generates a coverage report
+test.cover.watch: SHELL:=/bin/bash
+test.cover.watch:
+	@echo "🧪👁️  Watching all test suites..."
+	@source ${LOCAL_ENV_FILE} && mix test.watch --cover
+
+#🧪 test.cover.wip.watch: @ Runs and watches tests that matches the wip tag and generates a coverage report
+test.cover.wip.watch: SHELL:=/bin/bash
+test.cover.wip.watch:
+	@echo "🧪👁️  Watching all test suites..."
+	@source ${LOCAL_ENV_FILE} && mix test.watch --cover --only wip
+
 #🧪 test.watch: @ Runs and watches all test suites
 test.watch: SHELL:=/bin/bash
 test.watch:
