@@ -11,8 +11,8 @@ defmodule ExPomodoro.Supervisor do
   Starts a GenServer process linked to the current process.
   """
   @spec start_link(keyword()) :: {:ok, pid()}
-  def start_link(state) do
-    GenServer.start_link(__MODULE__, state, name: __MODULE__)
+  def start_link(init_arg) do
+    Supervisor.start_link(__MODULE__, init_arg, name: __MODULE__)
   end
 
   @impl true
