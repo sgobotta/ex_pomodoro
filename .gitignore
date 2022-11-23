@@ -33,3 +33,6 @@ ex_pomodoro-*.tar
 
 # Env
 .env
+
+# VSCode
+.vscode
