@@ -28,7 +28,7 @@ defmodule ExPomodoro.PomodoroSupervisor do
   returns it's pid.
   """
   @spec start_child(module(), keyword()) :: {:ok, pid()}
-  def start_child(supervisor \\ __MODULE__, args) do
+  def start_child(supervisor, args) do
     DynamicSupervisor.start_child(supervisor, {PomodoroServer, args})
   end
 
@@ -36,7 +36,7 @@ defmodule ExPomodoro.PomodoroSupervisor do
   Given a reference returns all supervisor children pids.
   """
   @spec list_children(module()) :: [pid()]
-  def list_children(supervisor \\ __MODULE__) do
+  def list_children(supervisor) do
     DynamicSupervisor.which_children(supervisor)
     |> Enum.filter(fn
       {_id, pid, :worker, _modules} when is_pid(pid) -> true
