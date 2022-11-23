@@ -117,7 +117,7 @@ defmodule ExPomodoro.PomodoroTest do
          %{
            pomodoro: %Pomodoro{} = pomodoro
          } do
-      %Pomodoro{} = new_pomodoro = %Pomodoro{pomodoro | current_round: 4}
+      %Pomodoro{} = %Pomodoro{pomodoro | current_round: 4}
       {:error, :invalid_rounds} = do_update(pomodoro, rounds: 3)
     end
 
