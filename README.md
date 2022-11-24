@@ -1,6 +1,6 @@
 # ExPomodoro
 
-**TODO: Add description**
+**The `ex_pomodoro` program is an excuse to play around and experiment with the Elixir `Supervisor`, `DynamicSupervisor` and `GenServer` modules.**
 
 ## Installation
 
@@ -15,7 +15,21 @@ def deps do
 end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/ex_pomodoro>.
+Otherwise it can be installed using the git remote url:
 
+```elixir
+def deps do
+  [
+    {:ex_pomodoro,
+     git: "git@github.com:sgobotta/ex_pomodoro.git", branch: "0.1.0"}
+  ]
+end
+```
+
+## Usage
+
+**TODO: add usage instructions.**
+
+## Development
+
+**TODO: add usage instructions.**
