@@ -15,7 +15,7 @@ defmodule ExPomodoro.SupervisorTest do
     end
 
     test "child_spec/2 spawns children", %{pid: pid} do
-      children = Supervisor.which_children(ExPomodoro.Supervisor)
+      children = Supervisor.which_children(pid)
 
       assert length(children) == 1
 
