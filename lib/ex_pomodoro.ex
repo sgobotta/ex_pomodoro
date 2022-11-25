@@ -43,8 +43,9 @@ defmodule ExPomodoro do
   @spec start(String.t(), Pomodoro.pomodoro_opts()) ::
           {:ok, Pomodoro.t()} | {:error, {:already_started, Pomodoro.t()}}
   def start(id, opts) do
-    with {:ok, _pid} <- start_child(id, opts) do
-      {:ok, %Pomodoro{}} = get_by_id(id)
+    with {:ok, pid} <- start_child(id, opts),
+         {:ok, {^pid, %Pomodoro{} = pomodoro}} <- get_by_id(id) do
+      {:ok, pomodoro}
     end
   end
 
@@ -64,12 +65,16 @@ defmodule ExPomodoro do
 
   """
   @spec get(String.t()) :: {:ok, Pomodoro.t()} | {:error, :not_found}
-  def get(id), do: get_by_id(id)
+  def get(id) do
+    with {:ok, {_pid, %Pomodoro{} = pomodoro}} <- get_by_id(id) do
+      {:ok, pomodoro}
+    end
+  end
 
   defp get_by_id(id) do
     case PomodoroSupervisor.get_child(PomodoroSupervisor, id) do
-      {_pid, %{id: ^id, pomodoro: %Pomodoro{} = pomodoro}} ->
-        {:ok, pomodoro}
+      {pid, %{id: ^id, pomodoro: %Pomodoro{} = pomodoro}} ->
+        {:ok, {pid, pomodoro}}
 
       nil ->
         {:error, :not_found}
@@ -78,7 +83,7 @@ defmodule ExPomodoro do
 
   defp start_child(id, opts) do
     case get_by_id(id) do
-      {:ok, %Pomodoro{} = pomodoro} ->
+      {:ok, {_pid, %Pomodoro{} = pomodoro}} ->
         {:noop, {:already_started, pomodoro}}
 
       {:error, :not_found} ->
