@@ -2,7 +2,7 @@ defmodule ExPomodoroTest do
   @moduledoc false
 
   use ExUnit.Case
-  doctest ExPomodoro
+  doctest ExPomodoro, only: []
 
   alias ExPomodoro.Pomodoro
 
@@ -17,13 +17,7 @@ defmodule ExPomodoroTest do
   end
 
   describe "#{ExPomodoro}.start/2" do
-    setup do
-      pid = start_supervised!(do_child_spec([]))
-
-      assert valid_pid?(pid)
-
-      %{pid: pid}
-    end
+    setup [:setup_pomodoro_server]
 
     test "starts a new #{ExPomodoro.PomodoroServer} child" do
       id = "some id"
@@ -60,11 +54,36 @@ defmodule ExPomodoroTest do
           current_duration: 0
         }}} = do_start(id, [])
     end
+  end
 
-    defp do_start(id, opts), do: ExPomodoro.start(id, opts)
+  describe "#{ExPomodoro}.get/1" do
+    setup [:setup_pomodoro_server]
+
+    test "returns a struct when the pomodoro exists" do
+      id = "some id"
+      {:ok, %Pomodoro{id: ^id}} = do_start(id, [])
+      {:ok, %Pomodoro{id: ^id}} = do_get(id)
+    end
+
+    test "returns not found when the pomodoro does not exist" do
+      id = "some id"
+      {:error, :not_found} = do_get(id)
+    end
+  end
+
+  defp setup_pomodoro_server(_context) do
+    pid = start_supervised!(do_child_spec([]))
+
+    assert valid_pid?(pid)
+
+    %{pid: pid}
   end
 
   defp valid_pid?(pid), do: is_pid(pid) and Process.alive?(pid)
 
   defp do_child_spec(opts), do: ExPomodoro.child_spec(opts)
+
+  defp do_start(id, opts), do: ExPomodoro.start(id, opts)
+
+  defp do_get(id), do: ExPomodoro.get(id)
 end

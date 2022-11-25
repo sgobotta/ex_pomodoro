@@ -31,6 +31,14 @@ defmodule ExPomodoro do
   * `break_duration`: The duration in minutes of the break duration, `non_negative_integer()`.
   * `rounds`: The number of rounds until a long break, `non_negative_integer()`.
 
+  ### Examples:
+
+      iex> ExPomodoro.start("some id", [])
+      {:ok, %ExPomodoro.Pomodoro{id: "some id"}}
+
+      iex> ExPomodoro.start("some_id", [])
+      {:error, {:already_started, %Pomodoro{id: "some id"}}}
+
   """
   @spec start(String.t(), Pomodoro.pomodoro_opts()) ::
           {:ok, Pomodoro.t()} | {:error, {:already_started, Pomodoro.t()}}
@@ -39,6 +47,24 @@ defmodule ExPomodoro do
       {:ok, %Pomodoro{}} = get_by_id(id)
     end
   end
+
+  @doc """
+  Generally this function is used to check whether a Pomodoro exists or not.
+
+  Given an `id`, if a Pomodoro exists, a `#{Pomodoro}` struct is returned,
+  othwerise returns an error tuple.
+
+  ### Examples:
+
+      iex> ExPomodoro.get("some id")
+      {:ok, %ExPomodoro.Pomodoro{id: "some id"}}
+
+      # iex> ExPomodoro.get("some other id")
+      # {:error, :not_found}
+
+  """
+  @spec get(String.t()) :: {:ok, Pomodoro.t()} | {:error, :not_found}
+  def get(id), do: get_by_id(id)
 
   defp get_by_id(id) do
     case PomodoroSupervisor.get_child(PomodoroSupervisor, id) do
