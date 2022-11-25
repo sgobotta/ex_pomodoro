@@ -15,7 +15,8 @@ defmodule ExPomodoro.Pomodoro do
     exercise_duration: @exercise_duration,
     break_duration: @break_duration,
     rounds: 4,
-    current_round: 0
+    current_round: 0,
+    current_duration: 0
   ]
 
   @type t :: %__MODULE__{}
