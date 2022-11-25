@@ -20,7 +20,7 @@ defmodule ExPomodoro.Pomodoro do
   ]
 
   @type t :: %__MODULE__{}
-  @type pomodoro_activity :: :exercise | :break
+  @type pomodoro_activity :: :exercise | :break | :idle
   @type pomodoro_opts :: [
           exercise_duration: non_neg_integer(),
           break_duration: non_neg_integer(),

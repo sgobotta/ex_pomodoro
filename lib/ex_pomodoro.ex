@@ -9,15 +9,31 @@ defmodule ExPomodoro do
   }
 
   @doc """
-  Returns the #{ExPomodoro} child spec. It is intended for appliations to
-  add an #{ExPomodoro} child spec to their application trees to have an
-  #{ExPomodoro.Supervisor} started before interacting with the rest of the
-  #{ExPomodoro} commands.
+  Returns the `#{ExPomodoro}` child spec. It is intended for appliations to
+  add an `#{ExPomodoro}` child spec to their application trees to have an
+  `#{ExPomodoro.Supervisor}` started before interacting with the rest of the
+  `#{ExPomodoro}` commands.
   """
   @spec child_spec(keyword) :: Supervisor.child_spec()
   defdelegate child_spec(options), to: ExPomodoro.Supervisor
 
-  @spec start(String.t(), Pomodoro.pomodoro_opts()) :: {:ok, Pomodoro.t()}
+  @doc """
+  This is the main function to start a pomodoro.
+
+  Given an `id` and a keyword of options returns a successful response if a
+  Pomodoro has been started or a failed response if a Pomodoro with that `id`
+  has been found. Either the successful or the failed repsonse returns the
+  current `#{Pomodoro}` struct.
+
+  ### Options
+
+  * `exercise_duration`: The duration in minutes of the exercise duration, `non_negative_integer()`.
+  * `break_duration`: The duration in minutes of the break duration, `non_negative_integer()`.
+  * `rounds`: The number of rounds until a long break, `non_negative_integer()`.
+
+  """
+  @spec start(String.t(), Pomodoro.pomodoro_opts()) ::
+          {:ok, Pomodoro.t()} | {:error, {:already_started, Pomodoro.t()}}
   def start(id, opts) do
     with {:ok, _pid} <- start_child(id, opts) do
       {:ok, %Pomodoro{}} = get_by_id(id)
