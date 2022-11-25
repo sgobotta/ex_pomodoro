@@ -69,13 +69,13 @@ test.cover:
 #🧪 test.cover.watch: @ Runs and watches all tests and generates a coverage report
 test.cover.watch: SHELL:=/bin/bash
 test.cover.watch:
-	@echo "🧪👁️  Watching all test suites..."
+	@echo "🧪👁️  Watching all test suites with coverage..."
 	@source ${LOCAL_ENV_FILE} && mix test.watch --cover
 
 #🧪 test.cover.wip.watch: @ Runs and watches tests that matches the wip tag and generates a coverage report
 test.cover.wip.watch: SHELL:=/bin/bash
 test.cover.wip.watch:
-	@echo "🧪👁️  Watching all test suites..."
+	@echo "🧪👁️  Watching test suites tagged with wip, with coverage..."
 	@source ${LOCAL_ENV_FILE} && mix test.watch --cover --only wip
 
 #🧪 test.watch: @ Runs and watches all test suites
