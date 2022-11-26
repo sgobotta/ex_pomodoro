@@ -49,11 +49,11 @@ defmodule ExPomodoro.PomodoroSupervisor do
   Given a cart id, returns `nil` or a tuple where the first component is a
   `#{PomodoroServer}` pid and the second component the cart server state.
   """
-  @spec get_child(module(), binary()) :: {pid(), map()} | nil
+  @spec get_child(module(), binary()) :: {pid(), ExPomodoro.Pomodoro.t()} | nil
   def get_child(supervisor, id) do
     list_children(supervisor)
     |> Enum.map(&{&1, PomodoroServer.get_state(&1)})
-    |> Enum.find(fn {_, state} -> state.id == id end)
+    |> Enum.find(fn {_pid, pomodoro} -> pomodoro.id == id end)
   end
 
   @doc """

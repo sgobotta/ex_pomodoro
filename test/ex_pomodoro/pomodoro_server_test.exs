@@ -10,6 +10,8 @@ defmodule ExPomodoro.PomodoroServerTest do
 
   alias ExPomodoro.Fixtures.PomodoroFixtures
 
+  @server_default_timeout :timer.minutes(90)
+
   describe "server lifecycle" do
     test "a server starts properly" do
       pid = start_server(ratio(2))
@@ -19,6 +21,16 @@ defmodule ExPomodoro.PomodoroServerTest do
 
       assert Process.alive?(pid)
     end
+
+    # test "a server is terminated by timeout" do
+    #   pid = start_server(ratio(2))
+
+    #   assert is_pid(pid)
+
+    #   :ok = sleep_with_ratio(1)
+
+    #   assert Process.alive?(pid)
+    # end
 
     defp start_server(_timeout) do
       %{id: pomodoro_id} = PomodoroFixtures.valid_attrs()
@@ -43,11 +55,11 @@ defmodule ExPomodoro.PomodoroServerTest do
 
     test "get_state/2 returns the server state", %{
       pid: pid,
-      pomodoro: %Pomodoro{id: pomodoro_id} = pomodoro
+      pomodoro: %Pomodoro{} = pomodoro
     } do
       response = do_get_state(pid)
 
-      assert response == %{id: pomodoro_id, pomodoro: pomodoro}
+      assert response == pomodoro
     end
   end
 
@@ -67,11 +79,11 @@ defmodule ExPomodoro.PomodoroServerTest do
       state: state,
       pomodoro: %Pomodoro{id: pomodoro_id} = pomodoro
     } do
-      expected_state = %{id: pomodoro_id, pomodoro: pomodoro}
+      expected_state = %{id: pomodoro_id, pomodoro: pomodoro, timeout: @server_default_timeout}
 
       response = PomodoroServer.handle_call(:get_state, self(), state)
 
-      {:reply, ^expected_state, ^expected_state} = response
+      {:reply, ^pomodoro, ^expected_state} = response
     end
   end
 end

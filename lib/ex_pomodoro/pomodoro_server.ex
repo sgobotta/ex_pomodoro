@@ -20,6 +20,8 @@ defmodule ExPomodoro.PomodoroServer do
           :pomodoro => Pomodoro.t()
         }
 
+  @timeout :timer.minutes(90)
+
   @doc """
   Given a keyword of arguments, starts a #{GenServer} process linked to the
   current process.
@@ -31,6 +33,7 @@ defmodule ExPomodoro.PomodoroServer do
   spend on tasks.
   * `break`: *(optional)* an mount of time in minutes to set breaks duration.
   * `rounds`: *(optional)* the amount of rounds until the pomodoro stops.
+  * `timeout`: *(optional)* minutes until the server is terminated by inactiviy.
 
   """
   @spec start_link(keyword()) :: {:ok, pid()}
@@ -65,7 +68,8 @@ defmodule ExPomodoro.PomodoroServer do
 
     %{
       id: id,
-      pomodoro: Pomodoro.new(id, opts)
+      pomodoro: Pomodoro.new(id, opts),
+      timeout: Keyword.get(opts, :timeout, @timeout)
     }
   end
 
@@ -85,8 +89,8 @@ defmodule ExPomodoro.PomodoroServer do
   end
 
   @impl GenServer
-  def handle_call(:get_state, _from, state) do
-    {:reply, state, state}
+  def handle_call(:get_state, _from, %{pomodoro: %Pomodoro{} = pomodoro} = state) do
+    {:reply, pomodoro, state}
   end
 
   @impl GenServer
@@ -95,6 +99,6 @@ defmodule ExPomodoro.PomodoroServer do
 
     state = %{state | pomodoro: pomodoro}
 
-    {:reply, {:ok, state}, state}
+    {:reply, {:ok, pomodoro}, state}
   end
 end
