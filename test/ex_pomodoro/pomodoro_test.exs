@@ -100,6 +100,19 @@ defmodule ExPomodoro.PomodoroTest do
     end
   end
 
+  describe "#{Pomodoro}.idle/1" do
+    setup do
+      %{pomodoro: PomodoroFixtures.new()}
+    end
+
+    test "returns a #{Pomodoro} struct that represents an idle state", %{
+      pomodoro: %Pomodoro{current_round: current_round} = pomodoro
+    } do
+      %Pomodoro{current_round: ^current_round, activity: :idle} =
+        Pomodoro.idle(pomodoro)
+    end
+  end
+
   describe "#{Pomodoro}.update/2" do
     setup do
       %{pomodoro: PomodoroFixtures.new()}

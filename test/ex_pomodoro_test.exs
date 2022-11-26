@@ -42,7 +42,7 @@ defmodule ExPomodoroTest do
          id: ^id
        }} = do_start(id, [])
 
-      {:noop,
+      {:error,
        {:already_started,
         %Pomodoro{
           id: ^id,
@@ -71,6 +71,21 @@ defmodule ExPomodoroTest do
     end
   end
 
+  describe "#{ExPomodoro}.pause/1" do
+    setup [:setup_pomodoro_server]
+
+    test "returns a struct when the pomodoro exists" do
+      id = "some id"
+      {:ok, %Pomodoro{id: ^id}} = do_start(id, [])
+      {:ok, %Pomodoro{id: ^id, activity: :idle}} = do_pause(id)
+    end
+
+    test "fails when the pomodoro does not exist" do
+      id = "some id"
+      {:error, :not_found} = do_pause(id)
+    end
+  end
+
   defp setup_pomodoro_server(_context) do
     pid = start_supervised!(do_child_spec([]))
 
@@ -86,4 +101,6 @@ defmodule ExPomodoroTest do
   defp do_start(id, opts), do: ExPomodoro.start(id, opts)
 
   defp do_get(id), do: ExPomodoro.get(id)
+
+  defp do_pause(id), do: ExPomodoro.pause(id)
 end

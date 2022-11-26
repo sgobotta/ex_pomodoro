@@ -47,6 +47,14 @@ defmodule ExPomodoro.PomodoroServer do
   end
 
   @doc """
+  Given a pid, pauses a pomodoro and returns the current state.
+  """
+  @spec pause(pid()) :: {:ok, state()}
+  def pause(pid) do
+    GenServer.call(pid, :pause)
+  end
+
+  @doc """
   Given a keyword of args returns a new map that represents the #{__MODULE__}
   state.
   """
@@ -79,5 +87,14 @@ defmodule ExPomodoro.PomodoroServer do
   @impl GenServer
   def handle_call(:get_state, _from, state) do
     {:reply, state, state}
+  end
+
+  @impl GenServer
+  def handle_call(:pause, _from, %{pomodoro: %Pomodoro{} = pomodoro} = state) do
+    %Pomodoro{} = pomodoro = Pomodoro.idle(pomodoro)
+
+    state = %{state | pomodoro: pomodoro}
+
+    {:reply, {:ok, state}, state}
   end
 end

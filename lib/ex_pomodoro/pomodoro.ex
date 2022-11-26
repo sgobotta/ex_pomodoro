@@ -20,8 +20,9 @@ defmodule ExPomodoro.Pomodoro do
   ]
 
   @type t :: %__MODULE__{}
-  @type pomodoro_activity :: :exercise | :break | :idle
-  @type pomodoro_opts :: [
+  @type id :: String.t()
+  @type activity :: :exercise | :break | :idle
+  @type opts :: [
           exercise_duration: non_neg_integer(),
           break_duration: non_neg_integer(),
           rounds: non_neg_integer()
@@ -38,7 +39,7 @@ defmodule ExPomodoro.Pomodoro do
   * `rounds`: the number of rounds until the pomodoro finishes (default: `4`).
 
   """
-  @spec new(String.t(), pomodoro_opts()) ::
+  @spec new(id(), opts()) ::
           t() | {:error, :invalid_rounds | :rounds_cant_be_zero}
   def new(id, opts \\ []) do
     with parsed_opts <- parse_opts(opts),
@@ -98,10 +99,18 @@ defmodule ExPomodoro.Pomodoro do
   end
 
   @doc """
+  Given a #{__MODULE__} struct, returns a new struct in an :idle activity.
+  """
+  @spec idle(t()) :: t()
+  def idle(%__MODULE__{} = pomodoro) do
+    %__MODULE__{pomodoro | activity: :idle}
+  end
+
+  @doc """
   Given a #{__MODULE__} struct and  options, returns a new one with it's fields
   updated.
   """
-  @spec update(t(), pomodoro_opts()) ::
+  @spec update(t(), opts()) ::
           t() | {:error, :invalid_rounds | :rounds_cant_be_zero}
   def update(%__MODULE__{} = pomodoro, opts) do
     with parsed_opts <- parse_opts(pomodoro, opts),
@@ -127,7 +136,7 @@ defmodule ExPomodoro.Pomodoro do
 
   defp valid_rounds?(_pomodoro, _new_rounds), do: {:error, :invalid_rounds}
 
-  @spec parse_opts(pomodoro_opts()) :: pomodoro_opts()
+  @spec parse_opts(opts()) :: opts()
   defp parse_opts(opts) do
     opts
     |> Keyword.put_new(:exercise_duration, default_exercise_duration())
