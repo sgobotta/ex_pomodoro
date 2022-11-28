@@ -12,7 +12,7 @@ defmodule ExPomodoro.PomodoroServerTest do
 
   @server_default_timeout :timer.minutes(90)
 
-  describe "server lifecycle" do
+  describe "#{PomodoroServer} timeout lifecycle" do
     test "a server starts properly" do
       # Setup
       pid = start_server(ratio(2))
@@ -40,7 +40,20 @@ defmodule ExPomodoro.PomodoroServerTest do
     end
   end
 
-  describe "server client interface" do
+  describe "#{PomodoroServer} exercise" do
+
+    test "state changes when exercise duration is completed" do
+      # Setup
+      pid = start_server(ratio(1))
+
+      # Exercise
+
+      # Verify
+      assert Process.alive?(pid)
+    end
+  end
+
+  describe "#{PomodoroServer} client interface" do
     setup do
       %Pomodoro{id: id} = pomodoro = do_new([])
 
@@ -71,7 +84,7 @@ defmodule ExPomodoro.PomodoroServerTest do
     start_supervised!({PomodoroServer, args})
   end
 
-  describe "server implementation" do
+  describe "#{PomodoroServer} implementation" do
     setup do
       %Pomodoro{id: id} = pomodoro = do_new()
       args = [id: id]
