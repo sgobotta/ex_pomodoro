@@ -28,12 +28,15 @@ defmodule ExPomodoro.PomodoroServer do
 
   ### Args:
 
-  * `id`: *(required)* string to identify a pomodoro struct.
-  * `exercise`: *(optional)* an mount of time in minutes to set the time to
-  spend on tasks.
-  * `break`: *(optional)* an mount of time in minutes to set breaks duration.
-  * `rounds`: *(optional)* the amount of rounds until the pomodoro stops.
-  * `timeout`: *(optional)* minutes until the server is terminated by inactiviy.
+  * `id`: *(required)* unique string to identify a pomodoro struct.
+  * `exercise`: *(optional)* an integer that represents the duration of the time
+  spent on exercise in milliseconds.
+  * `break`: *(optional)* an integer that represents the break duration in
+  milliseconds.
+  * `rounds`: *(optional)* an integer that represents the amount of rounds until
+  the pomodoro stops.
+  * `timeout`: *(optional)* milliseconds until the server is terminated by
+  inactiviy.
 
   """
   @spec start_link(keyword()) :: {:ok, pid()}
@@ -69,7 +72,8 @@ defmodule ExPomodoro.PomodoroServer do
     %{
       id: id,
       pomodoro: Pomodoro.new(id, opts),
-      timeout: Keyword.get(opts, :timeout, @timeout)
+      timeout: Keyword.get(opts, :timeout, @timeout),
+      timeout_ref: nil
     }
   end
 
@@ -85,11 +89,15 @@ defmodule ExPomodoro.PomodoroServer do
 
   @impl GenServer
   def handle_continue(_init_args, state) do
-    {:noreply, state}
+    {:noreply, schedule_timeout(state)}
   end
 
   @impl GenServer
-  def handle_call(:get_state, _from, %{pomodoro: %Pomodoro{} = pomodoro} = state) do
+  def handle_call(
+        :get_state,
+        _from,
+        %{pomodoro: %Pomodoro{} = pomodoro} = state
+      ) do
     {:reply, pomodoro, state}
   end
 
@@ -100,5 +108,26 @@ defmodule ExPomodoro.PomodoroServer do
     state = %{state | pomodoro: pomodoro}
 
     {:reply, {:ok, pomodoro}, state}
+  end
+
+  @impl GenServer
+  def handle_info(:kill, state) do
+    :ok =
+      Logger.info(
+        "#{__MODULE__} :: Terminating process with pid=#{inspect(self())}"
+      )
+
+    true = Process.exit(self(), :normal)
+
+    {:noreply, state}
+  end
+
+  defp schedule_timeout(%{timeout: timeout, timeout_ref: nil} = state),
+    do: %{state | timeout_ref: Process.send_after(self(), :kill, timeout)}
+
+  defp schedule_timeout(%{timeout: timeout, timeout_ref: timeout_ref} = state) do
+    _timeleft = Process.cancel_timer(timeout_ref)
+
+    %{state | timeout_ref: Process.send_after(self(), :kill, timeout)}
   end
 end
