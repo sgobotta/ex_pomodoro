@@ -15,7 +15,7 @@ defmodule ExPomodoro.PomodoroServerTest do
   describe "#{PomodoroServer} timeout lifecycle" do
     test "a server starts properly" do
       # Setup
-      pid = start_server(ratio(2))
+      pid = start_server([timeout: ratio(2)])
       assert is_pid(pid)
 
       # Exercise
@@ -27,7 +27,7 @@ defmodule ExPomodoro.PomodoroServerTest do
 
     test "a server is terminated on timeout" do
       # Setup
-      pid = start_server(ratio(2))
+      pid = start_server([timeout: ratio(2)])
       assert is_pid(pid)
 
       # Exercise
@@ -44,7 +44,7 @@ defmodule ExPomodoro.PomodoroServerTest do
 
     test "state changes when exercise duration is completed" do
       # Setup
-      pid = start_server(ratio(1))
+      pid = start_server([timeout: ratio(2)])
 
       # Exercise
 
@@ -75,11 +75,14 @@ defmodule ExPomodoro.PomodoroServerTest do
 
   defp do_get_state(pid), do: PomodoroServer.get_state(pid)
 
-  defp start_server(timeout) do
+  defp start_server(opts) do
     %{id: pomodoro_id} = PomodoroFixtures.valid_attrs()
-    %Pomodoro{id: id} = Pomodoro.new(pomodoro_id, [])
+    %Pomodoro{id: ^pomodoro_id} = Pomodoro.new(pomodoro_id, [])
 
-    args = [id: id, timeout: timeout]
+    args = [
+      id: pomodoro_id,
+      timeout: Keyword.fetch!(opts, :timeout)
+    ]
 
     start_supervised!({PomodoroServer, args})
   end
