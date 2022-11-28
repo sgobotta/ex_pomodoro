@@ -17,7 +17,9 @@ defmodule ExPomodoro.PomodoroServer do
 
   @type state :: %{
           :id => binary(),
-          :pomodoro => Pomodoro.t()
+          :pomodoro => Pomodoro.t(),
+          :timeout => non_neg_integer(),
+          :timeout_ref => reference() | nil
         }
 
   @timeout :timer.minutes(90)
