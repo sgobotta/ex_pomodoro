@@ -119,7 +119,7 @@ defmodule ExPomodoro.PomodoroServer do
 
     state = %{state | pomodoro: pomodoro}
 
-    {:reply, {:ok, pomodoro}, state}
+    {:reply, {:ok, pomodoro}, schedule_timers(state)}
   end
 
   @impl GenServer
@@ -236,7 +236,8 @@ defmodule ExPomodoro.PomodoroServer do
   defp schedule_pomodoro(
          %{pomodoro: %Pomodoro{activity: :idle}, activity_ref: activity_ref} =
            state
-       ) do
+       )
+       when is_reference(activity_ref) do
     _timeleft = Process.cancel_timer(activity_ref)
 
     %{state | activity_ref: nil}

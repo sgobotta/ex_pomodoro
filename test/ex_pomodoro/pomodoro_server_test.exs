@@ -90,7 +90,40 @@ defmodule ExPomodoro.PomodoroServerTest do
 
   describe "#{PomodoroServer}.pause/1" do
     test "changes activity to idle" do
+      # Setup
+      args = [
+        timeout: ratio(30),
+        exercise_duration: ratio(15),
+        break_duration: ratio(5),
+        rounds: 1
+      ]
 
+      pid = start_server(args)
+      assert is_pid(pid)
+
+      # Exercise
+      assert Process.alive?(pid)
+      :ok = sleep_with_ratio(5)
+
+      {:ok, %Pomodoro{activity: :idle}} = do_pause(pid)
+
+      # Verify
+      %Pomodoro{
+        activity: :idle,
+        current_round: 0
+      } = do_get_state(pid)
+
+      # After some time the activity did not change.
+      :ok = sleep_with_ratio(15)
+
+      %Pomodoro{
+        activity: :idle,
+        current_round: 0
+      } = do_get_state(pid)
+
+      # Teardown
+      :ok = sleep_with_ratio(40)
+      refute Process.alive?(pid)
     end
   end
 
