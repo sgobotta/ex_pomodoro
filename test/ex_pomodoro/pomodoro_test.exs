@@ -71,11 +71,9 @@ defmodule ExPomodoro.PomodoroTest do
       %{pomodoro: PomodoroFixtures.new()}
     end
 
-    test "returns a #{Pomodoro} struct that represents a new round that starts",
+    test "returns a #{Pomodoro} struct that represents an exercise process",
          %{pomodoro: %Pomodoro{current_round: current_round} = pomodoro} do
-      expected_current_round = current_round + 1
-
-      %Pomodoro{activity: :exercise, current_round: ^expected_current_round} =
+      %Pomodoro{activity: :exercise, current_round: ^current_round} =
         Pomodoro.exercise(pomodoro)
     end
   end
@@ -85,7 +83,7 @@ defmodule ExPomodoro.PomodoroTest do
       %{pomodoro: PomodoroFixtures.new()}
     end
 
-    test "returns a #{Pomodoro} struct that represents a break that starts", %{
+    test "returns a #{Pomodoro} struct that represents a break process", %{
       pomodoro: %Pomodoro{current_round: current_round} = pomodoro
     } do
       %Pomodoro{current_round: ^current_round, activity: :break} =

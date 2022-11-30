@@ -77,32 +77,22 @@ defmodule ExPomodoro.Pomodoro do
   in an exercise activity.
   """
   @spec exercise(t()) :: t()
-  def exercise(%__MODULE__{current_round: current_round} = pomodoro) do
-    %__MODULE__{
-      pomodoro
-      | activity: :exercise,
-        current_round: current_round + 1
-    }
-  end
+  def exercise(%__MODULE__{} = pomodoro),
+    do: %__MODULE__{pomodoro | activity: :exercise}
 
   @doc """
   Given a #{__MODULE__} struct, returns a new struct in a break activity.
   """
   @spec break(t()) :: t()
-  def break(%__MODULE__{} = pomodoro) do
-    %__MODULE__{
-      pomodoro
-      | activity: :break
-    }
-  end
+  def break(%__MODULE__{} = pomodoro),
+    do: %__MODULE__{pomodoro | activity: :break}
 
   @doc """
   Given a #{__MODULE__} struct, returns a new struct in an :idle activity.
   """
   @spec idle(t()) :: t()
-  def idle(%__MODULE__{} = pomodoro) do
-    %__MODULE__{pomodoro | activity: :idle}
-  end
+  def idle(%__MODULE__{} = pomodoro),
+    do: %__MODULE__{pomodoro | activity: :idle}
 
   @doc """
   Given a #{__MODULE__} struct and  options, returns a new one with it's fields

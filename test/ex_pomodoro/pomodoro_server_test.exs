@@ -158,7 +158,7 @@ defmodule ExPomodoro.PomodoroServerTest do
       # Verify
       %Pomodoro{
         activity: :exercise,
-        current_round: 1
+        current_round: 0
       } = do_get_state(pid)
 
       # Teardown
@@ -166,14 +166,14 @@ defmodule ExPomodoro.PomodoroServerTest do
 
       %Pomodoro{
         activity: :break,
-        current_round: 1
+        current_round: 0
       } = do_get_state(pid)
 
       :ok = sleep_with_ratio(5)
 
       %Pomodoro{
         activity: :idle,
-        current_round: 1
+        current_round: 0
       } = do_get_state(pid)
 
       :ok = sleep_with_ratio(30)
