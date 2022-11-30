@@ -40,8 +40,8 @@ defmodule ExPomodoro.PomodoroServerTest do
     end
   end
 
-  describe "#{PomodoroServer} exercise" do
-    test "state changes to break when exercise duration is completed" do
+  describe "#{PomodoroServer} activity" do
+    test "changes to break when duration is completed" do
       # Setup
       args = [
         timeout: ratio(30),
@@ -58,9 +58,15 @@ defmodule ExPomodoro.PomodoroServerTest do
       sleep_with_ratio(15)
 
       # Verify
-
       %Pomodoro{
         activity: :break,
+        current_round: 0
+      } = do_get_state(pid)
+
+      sleep_with_ratio(5)
+
+      %Pomodoro{
+        activity: :idle,
         current_round: 0
       } = do_get_state(pid)
 
