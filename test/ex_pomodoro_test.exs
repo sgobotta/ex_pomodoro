@@ -86,7 +86,7 @@ defmodule ExPomodoroTest do
     end
   end
 
-  defp setup_pomodoro_server(_context) do
+  defp setup_pomodoro_server(%{} = _context) do
     pid = start_supervised!(do_child_spec([]))
 
     assert valid_pid?(pid)

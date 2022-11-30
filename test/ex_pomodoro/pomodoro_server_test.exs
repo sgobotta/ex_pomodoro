@@ -254,16 +254,40 @@ defmodule ExPomodoro.PomodoroServerTest do
   # GenServer implementation tests
   #
 
-  describe "#{PomodoroServer} implementation" do
-    setup do
-      %Pomodoro{id: id} = pomodoro = do_new()
-      args = [id: id]
-      state = PomodoroServer.initial_state(args)
+  describe "#{PomodoroServer}.handle_info/2 :on_activity_change" do
+    setup [:initialise_state]
 
-      %{state: state, pomodoro: pomodoro}
+    test "updates the Pomodoro activity to break", %{state: state} do
+      # Exercise
+      response = PomodoroServer.handle_info(:on_activity_change, state)
+
+      # Verify
+      {:noreply, %{pomodoro: %Pomodoro{activity: :break}}} = response
     end
 
-    test "handle_call/3 :get_state replies with a state", %{
+    test "updates the Pomodoro activity to idle", %{
+      state: state,
+      pomodoro: %Pomodoro{} = pomodoro
+    } do
+      # Setup
+      state = %{
+        state
+        | activity_ref: dummy_timer_ref(),
+          pomodoro: Pomodoro.break(pomodoro)
+      }
+
+      # Exercise
+      response = PomodoroServer.handle_info(:on_activity_change, state)
+
+      # Verify
+      {:noreply, %{pomodoro: %Pomodoro{activity: :idle}}} = response
+    end
+  end
+
+  describe "#{PomodoroServer}.handle_call/3 :get_state" do
+    setup [:initialise_state]
+
+    test "replies with the current state", %{
       state: state,
       pomodoro: %Pomodoro{id: pomodoro_id} = pomodoro
     } do
@@ -284,35 +308,92 @@ defmodule ExPomodoro.PomodoroServerTest do
       # Verify
       {:reply, ^pomodoro, ^expected_state} = response
     end
+  end
 
-    test "handle_info/2 :on_activity_change updates the Pomodoro activity to break",
-         %{
-           state: state
-         } do
-      # Exercise
-      response = PomodoroServer.handle_info(:on_activity_change, state)
+  describe "#{PomodoroServer}.handle_call/3 :pause" do
+    setup [:initialise_state]
 
-      # Verify
-      {:noreply, %{pomodoro: %Pomodoro{activity: :break}}} = response
-    end
-
-    test "handle_info/2 :on_activity_change updates the Pomodoro activity to idle",
-         %{
-           state: state,
-           pomodoro: %Pomodoro{} = pomodoro
-         } do
+    test "during an exercise replies with a pomodoro in an idle activity", %{
+      state: state
+    } do
       # Setup
       state = %{
         state
-        | pomodoro: Pomodoro.break(pomodoro),
-          activity_ref: dummy_timer_ref()
+        | activity_ref: dummy_timer_ref()
       }
 
       # Exercise
-      response = PomodoroServer.handle_info(:on_activity_change, state)
+      response = PomodoroServer.handle_call(:pause, self(), state)
 
       # Verify
-      {:noreply, %{pomodoro: %Pomodoro{activity: :idle}}} = response
+      {:reply, {:ok, %Pomodoro{activity: :idle}},
+       %{activity_ref: nil, previous_activity: :exercise}} = response
+    end
+
+    test "during a break replies with a pomodoro in an idle activity", %{
+      pomodoro: %Pomodoro{} = pomodoro,
+      state: state
+    } do
+      # Setup
+      state = %{
+        state
+        | activity_ref: dummy_timer_ref(),
+          pomodoro: Pomodoro.break(pomodoro)
+      }
+
+      # Exercise
+      response = PomodoroServer.handle_call(:pause, self(), state)
+
+      # Verify
+      {:reply, {:ok, %Pomodoro{activity: :idle}},
+       %{activity_ref: nil, previous_activity: :break}} = response
+    end
+  end
+
+  describe "#{PomodoroServer}.handle_call/3 :resume" do
+    setup [:initialise_state]
+
+    test "continues from an exercise activity", %{
+      state: state,
+      pomodoro: %Pomodoro{} = pomodoro
+    } do
+      # Setup
+      state = %{
+        state
+        | pomodoro: %Pomodoro{pomodoro | activity: :idle},
+          previous_activity: :exercise,
+          previous_activity_timeleft: 5000
+      }
+
+      # Exercise
+      response = PomodoroServer.handle_call(:resume, self(), state)
+
+      # Verify
+      {
+        :reply,
+        {:ok, %Pomodoro{activity: :exercise}},
+        %{previous_activity: nil}
+      } = response
+    end
+
+    test "continues from a break activity", %{
+      state: state,
+      pomodoro: %Pomodoro{} = pomodoro
+    } do
+      # Setup
+      state = %{
+        state
+        | pomodoro: %Pomodoro{pomodoro | activity: :idle},
+          previous_activity: :break,
+          previous_activity_timeleft: 5000
+      }
+
+      # Exercise
+      response = PomodoroServer.handle_call(:resume, self(), state)
+
+      # Verify
+      {:reply, {:ok, %Pomodoro{activity: :break}}, %{previous_activity: nil}} =
+        response
     end
   end
 
@@ -323,4 +404,12 @@ defmodule ExPomodoro.PomodoroServerTest do
 
   defp dummy_timer_ref(timeout \\ 5000),
     do: Process.send_after(self(), :test, timeout)
+
+  defp initialise_state(%{} = _context) do
+    %Pomodoro{id: id} = pomodoro = do_new()
+    args = [id: id]
+    state = PomodoroServer.initial_state(args)
+
+    %{state: state, pomodoro: pomodoro}
+  end
 end
