@@ -15,7 +15,7 @@ defmodule ExPomodoro.PomodoroServerTest do
   describe "#{PomodoroServer} timeout lifecycle" do
     test "a server starts properly" do
       # Setup
-      pid = start_server([timeout: ratio(2)])
+      pid = start_server(timeout: ratio(2))
       assert is_pid(pid)
 
       # Exercise
@@ -27,7 +27,7 @@ defmodule ExPomodoro.PomodoroServerTest do
 
     test "a server is terminated on timeout" do
       # Setup
-      pid = start_server([timeout: ratio(2)])
+      pid = start_server(timeout: ratio(2))
       assert is_pid(pid)
 
       # Exercise
@@ -41,15 +41,32 @@ defmodule ExPomodoro.PomodoroServerTest do
   end
 
   describe "#{PomodoroServer} exercise" do
-
-    test "state changes when exercise duration is completed" do
+    test "state changes to break when exercise duration is completed" do
       # Setup
-      pid = start_server([timeout: ratio(2)])
+      args = [
+        timeout: ratio(30),
+        exercise_duration: ratio(15),
+        break_duration: ratio(5),
+        rounds: 1
+      ]
+
+      pid = start_server(args)
+      assert is_pid(pid)
 
       # Exercise
+      assert Process.alive?(pid)
+      sleep_with_ratio(15)
 
       # Verify
-      assert Process.alive?(pid)
+
+      %Pomodoro{
+        activity: :break,
+        current_round: 0
+      } = do_get_state(pid)
+
+      # Teardown
+      sleep_with_ratio(30)
+      refute Process.alive?(pid)
     end
   end
 
@@ -79,10 +96,12 @@ defmodule ExPomodoro.PomodoroServerTest do
     %{id: pomodoro_id} = PomodoroFixtures.valid_attrs()
     %Pomodoro{id: ^pomodoro_id} = Pomodoro.new(pomodoro_id, [])
 
-    args = [
-      id: pomodoro_id,
-      timeout: Keyword.fetch!(opts, :timeout)
-    ]
+    args =
+      [
+        id: pomodoro_id,
+        timeout: Keyword.fetch!(opts, :timeout)
+      ]
+      |> Keyword.merge(opts)
 
     start_supervised!({PomodoroServer, args})
   end
@@ -101,6 +120,7 @@ defmodule ExPomodoro.PomodoroServerTest do
       pomodoro: %Pomodoro{id: pomodoro_id} = pomodoro
     } do
       expected_state = %{
+        activity_ref: nil,
         id: pomodoro_id,
         pomodoro: pomodoro,
         timeout: @server_default_timeout,

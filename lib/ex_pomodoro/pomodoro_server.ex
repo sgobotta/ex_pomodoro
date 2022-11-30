@@ -16,6 +16,7 @@ defmodule ExPomodoro.PomodoroServer do
         ]
 
   @type state :: %{
+          :activity_ref => reference() | nil,
           :id => String.t(),
           :pomodoro => Pomodoro.t(),
           :timeout => non_neg_integer(),
@@ -72,6 +73,7 @@ defmodule ExPomodoro.PomodoroServer do
     opts = Keyword.delete(opts, :id)
 
     %{
+      activity_ref: nil,
       id: id,
       pomodoro: Pomodoro.new(id, opts),
       timeout: Keyword.get(opts, :timeout, @timeout),
@@ -82,7 +84,7 @@ defmodule ExPomodoro.PomodoroServer do
   @impl GenServer
   def init(init_args) do
     :ok =
-      Logger.info(
+      Logger.debug(
         "#{__MODULE__} :: Started process with pid=#{inspect(self())}, args=#{inspect(init_args)}"
       )
 
@@ -91,7 +93,7 @@ defmodule ExPomodoro.PomodoroServer do
 
   @impl GenServer
   def handle_continue(_init_args, state) do
-    {:noreply, schedule_timeout(state)}
+    {:noreply, schedule_timers(state)}
   end
 
   @impl GenServer
@@ -113,15 +115,85 @@ defmodule ExPomodoro.PomodoroServer do
   end
 
   @impl GenServer
+  def handle_info(:on_activity_change, %{pomodoro: %Pomodoro{activity: :exercise} = pomodoro} = state) do
+    :ok =
+      Logger.debug(
+        "#{__MODULE__} :: Activity change activity=break pid=#{inspect(self())}"
+      )
+
+    state = %{state | pomodoro: %Pomodoro{pomodoro | activity: :break}}
+
+    {:noreply, schedule_timers(state)}
+  end
+
+  @impl GenServer
+  def handle_info(:on_activity_change, %{pomodoro: %Pomodoro{activity: :break} = pomodoro} = state) do
+    :ok =
+      Logger.debug(
+        "#{__MODULE__} :: Activity change activity=idle pid=#{inspect(self())}"
+      )
+
+    state = %{state | pomodoro: %Pomodoro{pomodoro | activity: :idle}}
+
+    {:noreply, schedule_timers(state)}
+  end
+
+  @impl GenServer
   def handle_info(:kill, state) do
     :ok =
-      Logger.info(
+      Logger.debug(
         "#{__MODULE__} :: Terminating process with pid=#{inspect(self())}"
       )
 
     true = Process.exit(self(), :normal)
 
     {:noreply, state}
+  end
+
+  defp schedule_timers(state) do
+    state
+    |> schedule_timeout()
+    |> schedule_pomodoro()
+  end
+
+  defp schedule_pomodoro(
+         %{
+           pomodoro: %Pomodoro{activity: :exercise} = pomodoro,
+           activity_ref: nil
+         } = state
+       ) do
+    %Pomodoro{break_duration: break_duration} = pomodoro
+
+    %{
+      state
+      | activity_ref:
+          Process.send_after(self(), :on_activity_change, break_duration)
+    }
+  end
+
+  defp schedule_pomodoro(
+         %{
+           pomodoro: %Pomodoro{activity: :exercise} = pomodoro,
+           activity_ref: activity_ref
+         } = state
+       ) do
+    _timeleft = Process.cancel_timer(activity_ref)
+
+    %Pomodoro{break_duration: break_duration} = pomodoro
+
+    %{
+      state
+      | activity_ref:
+          Process.send_after(self(), :on_activity_change, break_duration)
+    }
+  end
+
+  defp schedule_pomodoro(%{pomodoro: %Pomodoro{activity: :break}} = state) do
+    state
+  end
+
+  defp schedule_pomodoro(%{pomodoro: %Pomodoro{activity: :idle}} = state) do
+    state
   end
 
   defp schedule_timeout(%{timeout: timeout, timeout_ref: nil} = state),
