@@ -151,6 +151,10 @@ defmodule ExPomodoro.PomodoroServerTest do
 
       {:ok, %Pomodoro{activity: :idle}} = do_pause(pid)
 
+      # We wait some time but nothing should change, the pomodoro is idle and a
+      # timeout is not reached.
+      :ok = sleep_with_ratio(25)
+
       # Exercise
       {:ok, %Pomodoro{activity: :exercise}} = do_resume(pid)
 
@@ -160,13 +164,38 @@ defmodule ExPomodoro.PomodoroServerTest do
         current_round: 0
       } = do_get_state(pid)
 
-      # Teardown
+      # ------------------------------------------------------------------------
+      # Wait until the exercise is completed and the break starts
+      #
+
+      # Setup
       :ok = sleep_with_ratio(10)
 
       %Pomodoro{
         activity: :break,
         current_round: 0
       } = do_get_state(pid)
+
+      :ok = sleep_with_ratio(4)
+
+      {:ok, %Pomodoro{activity: :idle}} = do_pause(pid)
+
+      # We wait some time but nothing should change, the pomodoro is idle and a
+      # timeout is not reached.
+      :ok = sleep_with_ratio(25)
+
+      # Exercise
+      {:ok, %Pomodoro{activity: :break}} = do_resume(pid)
+
+      # Verify
+      %Pomodoro{
+        activity: :break,
+        current_round: 0
+      } = do_get_state(pid)
+
+      # ------------------------------------------------------------------------
+      # Teardown
+      #
 
       :ok = sleep_with_ratio(5)
 
