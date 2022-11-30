@@ -41,7 +41,7 @@ defmodule ExPomodoro.PomodoroServerTest do
   end
 
   describe "#{PomodoroServer} activity" do
-    test "changes to break when duration is completed" do
+    test "changes when duration is completed" do
       # Setup
       args = [
         timeout: ratio(30),

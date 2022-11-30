@@ -25,6 +25,10 @@ defmodule ExPomodoro.PomodoroServer do
 
   @timeout :timer.minutes(90)
 
+  # ----------------------------------------------------------------------------
+  # GenServer interface
+  #
+
   @doc """
   Given a keyword of arguments, starts a #{GenServer} process linked to the
   current process.
@@ -80,6 +84,10 @@ defmodule ExPomodoro.PomodoroServer do
       timeout_ref: nil
     }
   end
+
+  # ----------------------------------------------------------------------------
+  # GenServer implementation
+  #
 
   @impl GenServer
   def init(init_args) do
@@ -156,6 +164,10 @@ defmodule ExPomodoro.PomodoroServer do
     {:noreply, state}
   end
 
+  # ----------------------------------------------------------------------------
+  # Schedule helpers
+  #
+
   defp schedule_timers(state) do
     state
     |> schedule_timeout()
@@ -172,8 +184,7 @@ defmodule ExPomodoro.PomodoroServer do
 
     %{
       state
-      | activity_ref:
-          Process.send_after(self(), :on_activity_change, exercise_duration)
+      | activity_ref: send_activity_change(exercise_duration)
     }
   end
 
@@ -182,15 +193,15 @@ defmodule ExPomodoro.PomodoroServer do
            pomodoro: %Pomodoro{activity: :exercise} = pomodoro,
            activity_ref: activity_ref
          } = state
-       ) do
+       )
+       when is_reference(activity_ref) do
     _timeleft = Process.cancel_timer(activity_ref)
 
     %Pomodoro{exercise_duration: exercise_duration} = pomodoro
 
     %{
       state
-      | activity_ref:
-          Process.send_after(self(), :on_activity_change, exercise_duration)
+      | activity_ref: send_activity_change(exercise_duration)
     }
   end
 
@@ -201,8 +212,7 @@ defmodule ExPomodoro.PomodoroServer do
 
     %{
       state
-      | activity_ref:
-          Process.send_after(self(), :on_activity_change, break_duration)
+      | activity_ref: send_activity_change(break_duration)
     }
   end
 
@@ -211,15 +221,15 @@ defmodule ExPomodoro.PomodoroServer do
            pomodoro: %Pomodoro{activity: :break} = pomodoro,
            activity_ref: activity_ref
          } = state
-       ) do
+       )
+       when is_reference(activity_ref) do
     _timeleft = Process.cancel_timer(activity_ref)
 
     %Pomodoro{break_duration: break_duration} = pomodoro
 
     %{
       state
-      | activity_ref:
-          Process.send_after(self(), :on_activity_change, break_duration)
+      | activity_ref: send_activity_change(break_duration)
     }
   end
 
@@ -233,11 +243,21 @@ defmodule ExPomodoro.PomodoroServer do
   end
 
   defp schedule_timeout(%{timeout: timeout, timeout_ref: nil} = state),
-    do: %{state | timeout_ref: Process.send_after(self(), :kill, timeout)}
+    do: %{state | timeout_ref: send_kill(timeout)}
 
-  defp schedule_timeout(%{timeout: timeout, timeout_ref: timeout_ref} = state) do
+  defp schedule_timeout(%{timeout: timeout, timeout_ref: timeout_ref} = state)
+       when is_reference(timeout_ref) do
     _timeleft = Process.cancel_timer(timeout_ref)
 
-    %{state | timeout_ref: Process.send_after(self(), :kill, timeout)}
+    %{state | timeout_ref: send_kill(timeout)}
   end
+
+  # ----------------------------------------------------------------------------
+  # Send message helpers
+  #
+
+  defp send_kill(time), do: Process.send_after(self(), :kill, time)
+
+  defp send_activity_change(time),
+    do: Process.send_after(self(), :on_activity_change, time)
 end
