@@ -89,7 +89,7 @@ defmodule ExPomodoro.PomodoroServerTest do
   #
 
   describe "#{PomodoroServer}.pause/1" do
-    test "changes activity to idle" do
+    test "causes the pomodoro to be in a resting state" do
       # Setup
       args = [
         timeout: ratio(30),
@@ -257,7 +257,7 @@ defmodule ExPomodoro.PomodoroServerTest do
   describe "#{PomodoroServer}.handle_info/2 :on_activity_change" do
     setup [:initialise_state]
 
-    test "updates the Pomodoro activity to break", %{state: state} do
+    test "updates the Pomodoro activity to :break", %{state: state} do
       # Exercise
       response = PomodoroServer.handle_info(:on_activity_change, state)
 
@@ -265,7 +265,7 @@ defmodule ExPomodoro.PomodoroServerTest do
       {:noreply, %{pomodoro: %Pomodoro{activity: :break}}} = response
     end
 
-    test "updates the Pomodoro activity to idle", %{
+    test "updates the Pomodoro activity to :idle", %{
       state: state,
       pomodoro: %Pomodoro{} = pomodoro
     } do
@@ -313,7 +313,7 @@ defmodule ExPomodoro.PomodoroServerTest do
   describe "#{PomodoroServer}.handle_call/3 :pause" do
     setup [:initialise_state]
 
-    test "during an exercise replies with a pomodoro in an idle activity", %{
+    test "during an exercise replies with a pomodoro in an :idle activity", %{
       state: state
     } do
       # Setup
@@ -330,7 +330,7 @@ defmodule ExPomodoro.PomodoroServerTest do
        %{activity_ref: nil, previous_activity: :exercise}} = response
     end
 
-    test "during a break replies with a pomodoro in an idle activity", %{
+    test "during a break replies with a pomodoro in an :idle activity", %{
       pomodoro: %Pomodoro{} = pomodoro,
       state: state
     } do
@@ -353,7 +353,7 @@ defmodule ExPomodoro.PomodoroServerTest do
   describe "#{PomodoroServer}.handle_call/3 :resume" do
     setup [:initialise_state]
 
-    test "continues from an exercise activity", %{
+    test "continues from an :exercise activity", %{
       state: state,
       pomodoro: %Pomodoro{} = pomodoro
     } do
@@ -376,7 +376,7 @@ defmodule ExPomodoro.PomodoroServerTest do
       } = response
     end
 
-    test "continues from a break activity", %{
+    test "continues from a :break activity", %{
       state: state,
       pomodoro: %Pomodoro{} = pomodoro
     } do
