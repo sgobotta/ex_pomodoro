@@ -128,7 +128,6 @@ defmodule ExPomodoro.PomodoroServerTest do
   end
 
   describe "#{PomodoroServer}.resume/1" do
-    @tag :wip
     test "continues the previously paused activity" do
       # Setup
       args = [
