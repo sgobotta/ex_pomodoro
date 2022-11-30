@@ -12,6 +12,10 @@ defmodule ExPomodoro.PomodoroServerTest do
 
   @server_default_timeout :timer.minutes(90)
 
+  # ----------------------------------------------------------------------------
+  # GenServer lifecycle tests
+  #
+
   describe "#{PomodoroServer} timeout lifecycle" do
     test "a server starts properly" do
       # Setup
@@ -39,6 +43,10 @@ defmodule ExPomodoro.PomodoroServerTest do
       refute Process.alive?(pid)
     end
   end
+
+  # ----------------------------------------------------------------------------
+  # GenServer implementation tests
+  #
 
   describe "#{PomodoroServer} activity" do
     test "changes when duration is completed" do
@@ -76,7 +84,17 @@ defmodule ExPomodoro.PomodoroServerTest do
     end
   end
 
-  describe "#{PomodoroServer} client interface" do
+  # ----------------------------------------------------------------------------
+  # GenServer interface tests
+  #
+
+  describe "#{PomodoroServer}.pause/1" do
+    test "changes activity to idle" do
+
+    end
+  end
+
+  describe "#{PomodoroServer}.get_state/1" do
     setup do
       %Pomodoro{id: id} = pomodoro = do_new([])
 
@@ -86,7 +104,7 @@ defmodule ExPomodoro.PomodoroServerTest do
       %{pid: pid, pomodoro: pomodoro}
     end
 
-    test "get_state/2 returns the server state", %{
+    test "returns the server state", %{
       pid: pid,
       pomodoro: %Pomodoro{} = pomodoro
     } do
@@ -97,6 +115,8 @@ defmodule ExPomodoro.PomodoroServerTest do
   end
 
   defp do_get_state(pid), do: PomodoroServer.get_state(pid)
+
+  defp do_pause(pid), do: PomodoroServer.pause(pid)
 
   defp start_server(opts) do
     %{id: pomodoro_id} = PomodoroFixtures.valid_attrs()
@@ -111,6 +131,10 @@ defmodule ExPomodoro.PomodoroServerTest do
 
     start_supervised!({PomodoroServer, args})
   end
+
+  # ----------------------------------------------------------------------------
+  # GenServer implementation tests
+  #
 
   describe "#{PomodoroServer} implementation" do
     setup do
