@@ -15,14 +15,11 @@ defmodule ExPomodoro.PomodoroTest do
         rounds: rounds
       } = PomodoroFixtures.valid_attrs()
 
-      expected_break_duration = :timer.minutes(break_duration)
-      expected_exercise_duration = :timer.minutes(exercise_duration)
-
       %Pomodoro{
         id: ^id,
         activity: :exercise,
-        break_duration: ^expected_break_duration,
-        exercise_duration: ^expected_exercise_duration,
+        break_duration: ^break_duration,
+        exercise_duration: ^exercise_duration,
         rounds: ^rounds
       } =
         do_new(id,
@@ -37,12 +34,8 @@ defmodule ExPomodoro.PomodoroTest do
         id: id
       } = PomodoroFixtures.valid_attrs()
 
-      expected_break_duration =
-        :timer.minutes(Pomodoro.default_break_duration())
-
-      expected_exercise_duration =
-        :timer.minutes(Pomodoro.default_exercise_duration())
-
+      expected_break_duration = Pomodoro.default_break_duration()
+      expected_exercise_duration = Pomodoro.default_exercise_duration()
       expected_rounds = Pomodoro.default_rounds()
 
       %Pomodoro{

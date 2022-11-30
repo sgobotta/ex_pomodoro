@@ -4,8 +4,8 @@ defmodule ExPomodoro.Pomodoro do
   technique.
   """
 
-  @exercise_duration 25
-  @break_duration 5
+  @exercise_duration :timer.minutes(25)
+  @break_duration :timer.minutes(5)
   @rounds 4
 
   @enforce_keys [:id]
@@ -33,9 +33,9 @@ defmodule ExPomodoro.Pomodoro do
   The options can redefine the following fields, otherwise the default values
   will be used:
   * `exercise_duration`: the amount of time intended to spend on task
-  completion, in minutes (default: `25`).
-  * `break_duration`: the amount of time the break lasts, in minutes (default:
-  `5`).
+  completion, in milliseconds (default: `25` minutes).
+  * `break_duration`: the amount of time the break lasts, in milliseconds
+  (default: `5` minutes).
   * `rounds`: the number of rounds until the pomodoro finishes (default: `4`).
 
   """
@@ -47,10 +47,8 @@ defmodule ExPomodoro.Pomodoro do
       %__MODULE__{
         id: id,
         activity: :exercise,
-        exercise_duration:
-          :timer.minutes(Keyword.fetch!(parsed_opts, :exercise_duration)),
-        break_duration:
-          :timer.minutes(Keyword.fetch!(parsed_opts, :break_duration)),
+        exercise_duration: Keyword.fetch!(parsed_opts, :exercise_duration),
+        break_duration: Keyword.fetch!(parsed_opts, :break_duration),
         rounds: Keyword.fetch!(parsed_opts, :rounds)
       }
     end
