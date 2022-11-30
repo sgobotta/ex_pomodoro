@@ -115,7 +115,10 @@ defmodule ExPomodoro.PomodoroServer do
   end
 
   @impl GenServer
-  def handle_info(:on_activity_change, %{pomodoro: %Pomodoro{activity: :exercise} = pomodoro} = state) do
+  def handle_info(
+        :on_activity_change,
+        %{pomodoro: %Pomodoro{activity: :exercise} = pomodoro} = state
+      ) do
     :ok =
       Logger.debug(
         "#{__MODULE__} :: Activity change activity=break pid=#{inspect(self())}"
@@ -127,7 +130,10 @@ defmodule ExPomodoro.PomodoroServer do
   end
 
   @impl GenServer
-  def handle_info(:on_activity_change, %{pomodoro: %Pomodoro{activity: :break} = pomodoro} = state) do
+  def handle_info(
+        :on_activity_change,
+        %{pomodoro: %Pomodoro{activity: :break} = pomodoro} = state
+      ) do
     :ok =
       Logger.debug(
         "#{__MODULE__} :: Activity change activity=idle pid=#{inspect(self())}"
@@ -188,16 +194,24 @@ defmodule ExPomodoro.PomodoroServer do
     }
   end
 
-  defp schedule_pomodoro(%{pomodoro: %Pomodoro{activity: :break} = pomodoro, activity_ref: nil} = state) do
-    %Pomodoro{break_duration: break_duration} = pomodoro
+  defp schedule_pomodoro(
+         %{pomodoro: %Pomodoro{activity: :break} = p, activity_ref: nil} = state
+       ) do
+    %Pomodoro{break_duration: break_duration} = p
 
     %{
       state
       | activity_ref:
-          Process.send_after(self(), :on_activity_change, break_duration)}
+          Process.send_after(self(), :on_activity_change, break_duration)
+    }
   end
 
-  defp schedule_pomodoro(%{pomodoro: %Pomodoro{activity: :break} = pomodoro, activity_ref: activity_ref} = state) do
+  defp schedule_pomodoro(
+         %{
+           pomodoro: %Pomodoro{activity: :break} = pomodoro,
+           activity_ref: activity_ref
+         } = state
+       ) do
     _timeleft = Process.cancel_timer(activity_ref)
 
     %Pomodoro{break_duration: break_duration} = pomodoro
@@ -205,10 +219,14 @@ defmodule ExPomodoro.PomodoroServer do
     %{
       state
       | activity_ref:
-          Process.send_after(self(), :on_activity_change, break_duration)}
+          Process.send_after(self(), :on_activity_change, break_duration)
+    }
   end
 
-  defp schedule_pomodoro(%{pomodoro: %Pomodoro{activity: :idle}, activity_ref: activity_ref} = state) do
+  defp schedule_pomodoro(
+         %{pomodoro: %Pomodoro{activity: :idle}, activity_ref: activity_ref} =
+           state
+       ) do
     _timeleft = Process.cancel_timer(activity_ref)
 
     %{state | activity_ref: nil}

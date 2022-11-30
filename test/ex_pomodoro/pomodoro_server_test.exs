@@ -141,9 +141,10 @@ defmodule ExPomodoro.PomodoroServerTest do
       {:reply, ^pomodoro, ^expected_state} = response
     end
 
-    test "handle_info/2 :on_activity_change updates the Pomodoro activity to break", %{
-      state: state
-    } do
+    test "handle_info/2 :on_activity_change updates the Pomodoro activity to break",
+         %{
+           state: state
+         } do
       # Exercise
       response = PomodoroServer.handle_info(:on_activity_change, state)
 
@@ -151,12 +152,17 @@ defmodule ExPomodoro.PomodoroServerTest do
       {:noreply, %{pomodoro: %Pomodoro{activity: :break}}} = response
     end
 
-    test "handle_info/2 :on_activity_change updates the Pomodoro activity to idle", %{
-      state: state,
-      pomodoro: %Pomodoro{} = pomodoro
-    } do
+    test "handle_info/2 :on_activity_change updates the Pomodoro activity to idle",
+         %{
+           state: state,
+           pomodoro: %Pomodoro{} = pomodoro
+         } do
       # Setup
-      state = %{state | pomodoro: Pomodoro.break(pomodoro), activity_ref: dummy_timer_ref()}
+      state = %{
+        state
+        | pomodoro: Pomodoro.break(pomodoro),
+          activity_ref: dummy_timer_ref()
+      }
 
       # Exercise
       response = PomodoroServer.handle_info(:on_activity_change, state)
