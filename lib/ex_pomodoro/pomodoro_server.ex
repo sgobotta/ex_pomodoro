@@ -9,7 +9,7 @@ defmodule ExPomodoro.PomodoroServer do
   require Logger
 
   @type init_args :: [
-          id: String.t(),
+          id: Pomodoro.id(),
           exercise: non_neg_integer(),
           break: non_neg_integer(),
           rounds: non_neg_integer()
@@ -17,8 +17,10 @@ defmodule ExPomodoro.PomodoroServer do
 
   @type state :: %{
           :activity_ref => reference() | nil,
-          :id => String.t(),
+          :id => Pomodoro.id(),
           :pomodoro => Pomodoro.t(),
+          :previous_activity => Pomodoro.activity() | nil,
+          :previous_activity_timeleft => non_neg_integer() | nil,
           :timeout => non_neg_integer(),
           :timeout_ref => reference() | nil
         }
@@ -60,11 +62,19 @@ defmodule ExPomodoro.PomodoroServer do
   end
 
   @doc """
-  Given a pid, pauses a pomodoro and returns the current state.
+  Given a pid, pauses a pomodoro and returns the current pomodoro state.
   """
   @spec pause(pid()) :: {:ok, state()}
   def pause(pid) do
     GenServer.call(pid, :pause)
+  end
+
+  @doc """
+  Given a pid, resumes a pomodoro and returns the current pomodoro state.
+  """
+  @spec resume(pid()) :: {:ok, state()}
+  def resume(pid) do
+    GenServer.call(pid, :resume)
   end
 
   @doc """
@@ -80,6 +90,8 @@ defmodule ExPomodoro.PomodoroServer do
       activity_ref: nil,
       id: id,
       pomodoro: Pomodoro.new(id, opts),
+      previous_activity: nil,
+      previous_activity_timeleft: nil,
       timeout: Keyword.get(opts, :timeout, @timeout),
       timeout_ref: nil
     }
@@ -114,12 +126,23 @@ defmodule ExPomodoro.PomodoroServer do
   end
 
   @impl GenServer
-  def handle_call(:pause, _from, %{pomodoro: %Pomodoro{} = pomodoro} = state) do
-    %Pomodoro{} = pomodoro = Pomodoro.idle(pomodoro)
+  def handle_call(:pause, _from, state) do
+    state =
+      state
+      |> pause_pomodoro()
+      |> schedule_timers()
 
-    state = %{state | pomodoro: pomodoro}
+    {:reply, {:ok, state.pomodoro}, state}
+  end
 
-    {:reply, {:ok, pomodoro}, schedule_timers(state)}
+  @impl GenServer
+  def handle_call(:resume, _from, state) do
+    state =
+      state
+      |> resume_pomodoro()
+      |> schedule_timers()
+
+    {:reply, {:ok, state.pomodoro}, state}
   end
 
   @impl GenServer
@@ -165,6 +188,51 @@ defmodule ExPomodoro.PomodoroServer do
   end
 
   # ----------------------------------------------------------------------------
+  # State helpers
+  #
+
+  defp pause_pomodoro(
+         %{
+           activity_ref: activity_ref,
+           pomodoro: %Pomodoro{activity: activity} = pomodoro
+         } = state
+       )
+       when is_reference(activity_ref) do
+    timeleft = Process.cancel_timer(activity_ref)
+
+    %Pomodoro{} = pomodoro = Pomodoro.idle(pomodoro)
+
+    pomodoro = %Pomodoro{pomodoro | current_duration: timeleft}
+
+    %{
+      state
+      | activity_ref: nil,
+        pomodoro: pomodoro,
+        previous_activity: activity
+    }
+  end
+
+  defp resume_pomodoro(
+         %{
+           activity_ref: nil,
+           pomodoro: %Pomodoro{} = pomodoro,
+           previous_activity: previous_activity
+         } = state
+       ) do
+    %Pomodoro{} =
+      pomodoro =
+      case previous_activity do
+        :exercise ->
+          Pomodoro.exercise(pomodoro)
+
+        :break ->
+          Pomodoro.break(pomodoro)
+      end
+
+    %{state | pomodoro: pomodoro, previous_activity: nil}
+  end
+
+  # ----------------------------------------------------------------------------
   # Schedule helpers
   #
 
@@ -172,6 +240,22 @@ defmodule ExPomodoro.PomodoroServer do
     state
     |> schedule_timeout()
     |> schedule_pomodoro()
+  end
+
+  defp schedule_pomodoro(
+         %{
+           activity_ref: nil,
+           pomodoro: %Pomodoro{activity: :exercise} = pomodoro,
+           previous_activity_timeleft: previous_activity_timeleft
+         } = state
+       )
+       when is_integer(previous_activity_timeleft) do
+    %Pomodoro{current_duration: current_duration} = pomodoro
+
+    %{
+      state
+      | activity_ref: send_activity_change(current_duration)
+    }
   end
 
   defp schedule_pomodoro(
@@ -206,6 +290,22 @@ defmodule ExPomodoro.PomodoroServer do
   end
 
   defp schedule_pomodoro(
+         %{
+           activity_ref: nil,
+           pomodoro: %Pomodoro{activity: :break} = pomodoro,
+           previous_activity_timeleft: previous_activity_timeleft
+         } = state
+       )
+       when is_integer(previous_activity_timeleft) do
+    %Pomodoro{break_duration: break_duration} = pomodoro
+
+    %{
+      state
+      | activity_ref: send_activity_change(break_duration)
+    }
+  end
+
+  defp schedule_pomodoro(
          %{pomodoro: %Pomodoro{activity: :break} = p, activity_ref: nil} = state
        ) do
     %Pomodoro{break_duration: break_duration} = p
@@ -233,14 +333,33 @@ defmodule ExPomodoro.PomodoroServer do
     }
   end
 
+  # Pomodoro was paused, the activity_ref was assigned to nil
+  defp schedule_pomodoro(
+         %{
+           pomodoro: %Pomodoro{
+             activity: :idle,
+             current_duration: current_duration
+           },
+           activity_ref: nil
+         } = state
+       ) do
+    %{
+      state
+      | activity_ref: nil,
+        previous_activity_timeleft: current_duration
+    }
+  end
+
+  # Pomodoro finished a break, activity_ref corresponds to the break timer
   defp schedule_pomodoro(
          %{pomodoro: %Pomodoro{activity: :idle}, activity_ref: activity_ref} =
            state
        )
        when is_reference(activity_ref) do
-    _timeleft = Process.cancel_timer(activity_ref)
-
-    %{state | activity_ref: nil}
+    %{
+      state
+      | activity_ref: nil
+    }
   end
 
   defp schedule_timeout(%{timeout: timeout, timeout_ref: nil} = state),

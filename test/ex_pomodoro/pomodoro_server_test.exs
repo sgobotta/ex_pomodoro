@@ -127,6 +127,61 @@ defmodule ExPomodoro.PomodoroServerTest do
     end
   end
 
+  describe "#{PomodoroServer}.resume/1" do
+    @tag :wip
+    test "continues the previously paused activity" do
+      # Setup
+      args = [
+        timeout: ratio(30),
+        exercise_duration: ratio(15),
+        break_duration: ratio(5),
+        rounds: 1
+      ]
+
+      pid = start_server(args)
+      assert is_pid(pid)
+
+      assert Process.alive?(pid)
+
+      %Pomodoro{
+        activity: :exercise,
+        current_round: 0
+      } = do_get_state(pid)
+
+      :ok = sleep_with_ratio(5)
+
+      {:ok, %Pomodoro{activity: :idle}} = do_pause(pid)
+
+      # Exercise
+      {:ok, %Pomodoro{activity: :exercise}} = do_resume(pid)
+
+      # Verify
+      %Pomodoro{
+        activity: :exercise,
+        current_round: 1
+      } = do_get_state(pid)
+
+      # Teardown
+      :ok = sleep_with_ratio(10)
+
+      %Pomodoro{
+        activity: :break,
+        current_round: 1
+      } = do_get_state(pid)
+
+      :ok = sleep_with_ratio(5)
+
+      %Pomodoro{
+        activity: :idle,
+        current_round: 1
+      } = do_get_state(pid)
+
+      :ok = sleep_with_ratio(30)
+
+      refute Process.alive?(pid)
+    end
+  end
+
   describe "#{PomodoroServer}.get_state/1" do
     setup do
       %Pomodoro{id: id} = pomodoro = do_new([])
@@ -150,6 +205,8 @@ defmodule ExPomodoro.PomodoroServerTest do
   defp do_get_state(pid), do: PomodoroServer.get_state(pid)
 
   defp do_pause(pid), do: PomodoroServer.pause(pid)
+
+  defp do_resume(pid), do: PomodoroServer.resume(pid)
 
   defp start_server(opts) do
     %{id: pomodoro_id} = PomodoroFixtures.valid_attrs()
@@ -187,6 +244,8 @@ defmodule ExPomodoro.PomodoroServerTest do
         activity_ref: nil,
         id: pomodoro_id,
         pomodoro: pomodoro,
+        previous_activity: nil,
+        previous_activity_timeleft: nil,
         timeout: @server_default_timeout,
         timeout_ref: nil
       }
