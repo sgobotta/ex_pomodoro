@@ -65,7 +65,7 @@ defmodule ExPomodoro.PomodoroServerTest do
       } = do_get_state(pid)
 
       # Teardown
-      sleep_with_ratio(30)
+      sleep_with_ratio(40)
       refute Process.alive?(pid)
     end
   end

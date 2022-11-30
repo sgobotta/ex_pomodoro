@@ -121,7 +121,7 @@ defmodule ExPomodoro.PomodoroServer do
         "#{__MODULE__} :: Activity change activity=break pid=#{inspect(self())}"
       )
 
-    state = %{state | pomodoro: %Pomodoro{pomodoro | activity: :break}}
+    state = %{state | pomodoro: Pomodoro.break(pomodoro)}
 
     {:noreply, schedule_timers(state)}
   end
@@ -133,7 +133,7 @@ defmodule ExPomodoro.PomodoroServer do
         "#{__MODULE__} :: Activity change activity=idle pid=#{inspect(self())}"
       )
 
-    state = %{state | pomodoro: %Pomodoro{pomodoro | activity: :idle}}
+    state = %{state | pomodoro: Pomodoro.idle(pomodoro)}
 
     {:noreply, schedule_timers(state)}
   end
@@ -162,12 +162,12 @@ defmodule ExPomodoro.PomodoroServer do
            activity_ref: nil
          } = state
        ) do
-    %Pomodoro{break_duration: break_duration} = pomodoro
+    %Pomodoro{exercise_duration: exercise_duration} = pomodoro
 
     %{
       state
       | activity_ref:
-          Process.send_after(self(), :on_activity_change, break_duration)
+          Process.send_after(self(), :on_activity_change, exercise_duration)
     }
   end
 
@@ -179,17 +179,24 @@ defmodule ExPomodoro.PomodoroServer do
        ) do
     _timeleft = Process.cancel_timer(activity_ref)
 
+    %Pomodoro{exercise_duration: exercise_duration} = pomodoro
+
+    %{
+      state
+      | activity_ref:
+          Process.send_after(self(), :on_activity_change, exercise_duration)
+    }
+  end
+
+  defp schedule_pomodoro(%{pomodoro: %Pomodoro{activity: :break} = pomodoro, activity_ref: activity_ref} = state) do
+    _timeleft = Process.cancel_timer(activity_ref)
+
     %Pomodoro{break_duration: break_duration} = pomodoro
 
     %{
       state
       | activity_ref:
-          Process.send_after(self(), :on_activity_change, break_duration)
-    }
-  end
-
-  defp schedule_pomodoro(%{pomodoro: %Pomodoro{activity: :break}} = state) do
-    state
+          Process.send_after(self(), :on_activity_change, break_duration)}
   end
 
   defp schedule_pomodoro(%{pomodoro: %Pomodoro{activity: :idle}} = state) do
