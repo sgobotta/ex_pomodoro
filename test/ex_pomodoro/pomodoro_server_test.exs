@@ -125,6 +125,7 @@ defmodule ExPomodoro.PomodoroServerTest do
       state: state,
       pomodoro: %Pomodoro{id: pomodoro_id} = pomodoro
     } do
+      # Setup
       expected_state = %{
         activity_ref: nil,
         id: pomodoro_id,
@@ -133,9 +134,35 @@ defmodule ExPomodoro.PomodoroServerTest do
         timeout_ref: nil
       }
 
+      # Exercise
       response = PomodoroServer.handle_call(:get_state, self(), state)
 
+      # Verify
       {:reply, ^pomodoro, ^expected_state} = response
+    end
+
+    test "handle_info/2 :on_activity_change updates the Pomodoro activity to break", %{
+      state: state
+    } do
+      # Exercise
+      response = PomodoroServer.handle_info(:on_activity_change, state)
+
+      # Verify
+      {:noreply, %{pomodoro: %Pomodoro{activity: :break}}} = response
+    end
+
+    test "handle_info/2 :on_activity_change updates the Pomodoro activity to idle", %{
+      state: state,
+      pomodoro: %Pomodoro{} = pomodoro
+    } do
+      # Setup
+      state = %{state | pomodoro: Pomodoro.break(pomodoro), activity_ref: dummy_timer_ref()}
+
+      # Exercise
+      response = PomodoroServer.handle_info(:on_activity_change, state)
+
+      # Verify
+      {:noreply, %{pomodoro: %Pomodoro{activity: :idle}}} = response
     end
   end
 
@@ -143,4 +170,7 @@ defmodule ExPomodoro.PomodoroServerTest do
     %{id: pomodoro_id} = PomodoroFixtures.valid_attrs(Enum.into(opts, %{}))
     %Pomodoro{id: ^pomodoro_id} = Pomodoro.new(pomodoro_id, [])
   end
+
+  defp dummy_timer_ref(timeout \\ 5000),
+    do: Process.send_after(self(), :test, timeout)
 end

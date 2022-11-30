@@ -188,6 +188,15 @@ defmodule ExPomodoro.PomodoroServer do
     }
   end
 
+  defp schedule_pomodoro(%{pomodoro: %Pomodoro{activity: :break} = pomodoro, activity_ref: nil} = state) do
+    %Pomodoro{break_duration: break_duration} = pomodoro
+
+    %{
+      state
+      | activity_ref:
+          Process.send_after(self(), :on_activity_change, break_duration)}
+  end
+
   defp schedule_pomodoro(%{pomodoro: %Pomodoro{activity: :break} = pomodoro, activity_ref: activity_ref} = state) do
     _timeleft = Process.cancel_timer(activity_ref)
 
@@ -199,8 +208,10 @@ defmodule ExPomodoro.PomodoroServer do
           Process.send_after(self(), :on_activity_change, break_duration)}
   end
 
-  defp schedule_pomodoro(%{pomodoro: %Pomodoro{activity: :idle}} = state) do
-    state
+  defp schedule_pomodoro(%{pomodoro: %Pomodoro{activity: :idle}, activity_ref: activity_ref} = state) do
+    _timeleft = Process.cancel_timer(activity_ref)
+
+    %{state | activity_ref: nil}
   end
 
   defp schedule_timeout(%{timeout: timeout, timeout_ref: nil} = state),
