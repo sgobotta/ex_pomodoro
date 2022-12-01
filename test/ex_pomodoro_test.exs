@@ -29,7 +29,7 @@ defmodule ExPomodoroTest do
          exercise_duration: 1_500_000,
          break_duration: 300_000,
          rounds: 4,
-         current_round: 0,
+         current_round: 1,
          current_duration: 0
        }} = do_start(id, [])
     end
@@ -50,7 +50,7 @@ defmodule ExPomodoroTest do
           exercise_duration: 1_500_000,
           break_duration: 300_000,
           rounds: 4,
-          current_round: 0,
+          current_round: 1,
           current_duration: 0
         }}} = do_start(id, [])
     end

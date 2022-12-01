@@ -15,13 +15,13 @@ defmodule ExPomodoro.Pomodoro do
     exercise_duration: @exercise_duration,
     break_duration: @break_duration,
     rounds: 4,
-    current_round: 0,
+    current_round: 1,
     current_duration: 0
   ]
 
   @type t :: %__MODULE__{}
   @type id :: String.t()
-  @type activity :: :exercise | :break | :idle
+  @type activity :: :exercise | :break | :idle | :finished
   @type opts :: [
           exercise_duration: non_neg_integer(),
           break_duration: non_neg_integer(),
@@ -93,6 +93,49 @@ defmodule ExPomodoro.Pomodoro do
   @spec idle(t()) :: t()
   def idle(%__MODULE__{} = pomodoro),
     do: %__MODULE__{pomodoro | activity: :idle}
+
+  @doc """
+  Given a #{__MODULE__} struct, starts a new round by increasing the current
+  round and assigning a new activity.
+  """
+  @spec start_round(t()) :: t()
+  def start_round(
+        %__MODULE__{
+          activity: :idle,
+          current_round: current_round,
+          rounds: rounds
+        } = pomodoro
+      )
+      when current_round < rounds,
+      do: %__MODULE__{
+        pomodoro
+        | activity: :exercise,
+          current_round: current_round + 1
+      }
+
+  @doc """
+  Given a #{__MODULE__} struct, completes the current round by assigning a new
+  activity.
+  """
+  @spec complete_round(t()) :: t()
+  def complete_round(
+        %__MODULE__{
+          activity: :break,
+          current_round: current_round,
+          rounds: current_round
+        } = pomodoro
+      ),
+      do: %__MODULE__{pomodoro | activity: :finished}
+
+  def complete_round(
+        %__MODULE__{
+          activity: :break,
+          current_round: current_round,
+          rounds: rounds
+        } = pomodoro
+      )
+      when current_round < rounds,
+      do: %__MODULE__{pomodoro | activity: :idle}
 
   @doc """
   Given a #{__MODULE__} struct and  options, returns a new one with it's fields

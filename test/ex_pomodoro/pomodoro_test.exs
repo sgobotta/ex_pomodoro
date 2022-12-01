@@ -67,9 +67,7 @@ defmodule ExPomodoro.PomodoroTest do
   end
 
   describe "#{Pomodoro}.exercise/1" do
-    setup do
-      %{pomodoro: PomodoroFixtures.new()}
-    end
+    setup [:create_pomodoro]
 
     test "returns a #{Pomodoro} struct that represents an exercise process",
          %{pomodoro: %Pomodoro{current_round: current_round} = pomodoro} do
@@ -79,9 +77,7 @@ defmodule ExPomodoro.PomodoroTest do
   end
 
   describe "#{Pomodoro}.break/1" do
-    setup do
-      %{pomodoro: PomodoroFixtures.new()}
-    end
+    setup [:create_pomodoro]
 
     test "returns a #{Pomodoro} struct that represents a break process", %{
       pomodoro: %Pomodoro{current_round: current_round} = pomodoro
@@ -92,9 +88,7 @@ defmodule ExPomodoro.PomodoroTest do
   end
 
   describe "#{Pomodoro}.idle/1" do
-    setup do
-      %{pomodoro: PomodoroFixtures.new()}
-    end
+    setup [:create_pomodoro]
 
     test "returns a #{Pomodoro} struct that represents an idle state", %{
       pomodoro: %Pomodoro{current_round: current_round} = pomodoro
@@ -104,10 +98,32 @@ defmodule ExPomodoro.PomodoroTest do
     end
   end
 
-  describe "#{Pomodoro}.update/2" do
-    setup do
-      %{pomodoro: PomodoroFixtures.new()}
+  describe "#{Pomodoro}.start_round/1" do
+    test "returns a pomodoro in an exercise activity with an increased round" do
+      %Pomodoro{} = pomodoro = PomodoroFixtures.new(%{rounds: 4})
+
+      %Pomodoro{} =
+        pomodoro = %Pomodoro{pomodoro | activity: :idle, current_round: 1}
+
+      %Pomodoro{activity: :exercise, current_round: 2} =
+        do_start_round(pomodoro)
     end
+  end
+
+  describe "#{Pomodoro}.complete_round/1" do
+    test "returns a pomodoro in an idle activity with remaining rounds" do
+      %Pomodoro{} = pomodoro = PomodoroFixtures.new(%{rounds: 2})
+
+      %Pomodoro{} =
+        pomodoro = %Pomodoro{pomodoro | activity: :break, current_round: 2}
+
+      %Pomodoro{activity: :finished, current_round: 2} =
+        do_complete_round(pomodoro)
+    end
+  end
+
+  describe "#{Pomodoro}.update/2" do
+    setup [:create_pomodoro]
 
     test "returns a #{Pomodoro} struct with it's rounds fields updated", %{
       pomodoro: %Pomodoro{} = pomodoro
@@ -141,6 +157,15 @@ defmodule ExPomodoro.PomodoroTest do
   defp do_new(id), do: Pomodoro.new(id)
   defp do_new(id, opts), do: Pomodoro.new(id, opts)
 
+  defp do_start_round(%Pomodoro{} = pomodoro),
+    do: Pomodoro.start_round(pomodoro)
+
+  defp do_complete_round(%Pomodoro{} = pomodoro),
+    do: Pomodoro.complete_round(pomodoro)
+
   defp do_update(%Pomodoro{} = pomodoro, opts),
     do: Pomodoro.update(pomodoro, opts)
+
+  defp create_pomodoro(%{} = _context),
+    do: %{pomodoro: PomodoroFixtures.new()}
 end

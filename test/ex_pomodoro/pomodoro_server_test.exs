@@ -55,7 +55,7 @@ defmodule ExPomodoro.PomodoroServerTest do
         timeout: ratio(30),
         exercise_duration: ratio(15),
         break_duration: ratio(5),
-        rounds: 1
+        rounds: 2
       ]
 
       pid = start_server(args)
@@ -63,23 +63,39 @@ defmodule ExPomodoro.PomodoroServerTest do
 
       # Exercise
       assert Process.alive?(pid)
-      sleep_with_ratio(15)
+      :ok = sleep_with_ratio(15)
 
       # Verify
       %Pomodoro{
         activity: :break,
-        current_round: 0
+        current_round: 1
       } = do_get_state(pid)
 
-      sleep_with_ratio(5)
+      :ok = sleep_with_ratio(5)
 
       %Pomodoro{
         activity: :idle,
-        current_round: 0
+        current_round: 1
       } = do_get_state(pid)
 
+      # ------------------------------------------------------------------------
+      # A new round is started
+      #
+
+      :ok = sleep_with_ratio(2)
+
+      {:ok, %Pomodoro{activity: :exercise, current_round: 2}} = do_resume(pid)
+
+      :ok = sleep_with_ratio(15)
+
+      %Pomodoro{activity: :break, current_round: 2} = do_get_state(pid)
+
+      :ok = sleep_with_ratio(5)
+
+      %Pomodoro{activity: :finished, current_round: 2} = do_get_state(pid)
+
       # Teardown
-      sleep_with_ratio(40)
+      :ok = sleep_with_ratio(40)
       refute Process.alive?(pid)
     end
   end
@@ -110,7 +126,7 @@ defmodule ExPomodoro.PomodoroServerTest do
       # Verify
       %Pomodoro{
         activity: :idle,
-        current_round: 0
+        current_round: 1
       } = do_get_state(pid)
 
       # After some time the activity did not change.
@@ -118,7 +134,7 @@ defmodule ExPomodoro.PomodoroServerTest do
 
       %Pomodoro{
         activity: :idle,
-        current_round: 0
+        current_round: 1
       } = do_get_state(pid)
 
       # Teardown
@@ -134,7 +150,7 @@ defmodule ExPomodoro.PomodoroServerTest do
         timeout: ratio(30),
         exercise_duration: ratio(15),
         break_duration: ratio(5),
-        rounds: 1
+        rounds: 2
       ]
 
       pid = start_server(args)
@@ -144,7 +160,7 @@ defmodule ExPomodoro.PomodoroServerTest do
 
       %Pomodoro{
         activity: :exercise,
-        current_round: 0
+        current_round: 1
       } = do_get_state(pid)
 
       :ok = sleep_with_ratio(5)
@@ -161,7 +177,7 @@ defmodule ExPomodoro.PomodoroServerTest do
       # Verify
       %Pomodoro{
         activity: :exercise,
-        current_round: 0
+        current_round: 1
       } = do_get_state(pid)
 
       # ------------------------------------------------------------------------
@@ -173,7 +189,7 @@ defmodule ExPomodoro.PomodoroServerTest do
 
       %Pomodoro{
         activity: :break,
-        current_round: 0
+        current_round: 1
       } = do_get_state(pid)
 
       :ok = sleep_with_ratio(4)
@@ -190,7 +206,7 @@ defmodule ExPomodoro.PomodoroServerTest do
       # Verify
       %Pomodoro{
         activity: :break,
-        current_round: 0
+        current_round: 1
       } = do_get_state(pid)
 
       # ------------------------------------------------------------------------
@@ -201,7 +217,7 @@ defmodule ExPomodoro.PomodoroServerTest do
 
       %Pomodoro{
         activity: :idle,
-        current_round: 0
+        current_round: 1
       } = do_get_state(pid)
 
       :ok = sleep_with_ratio(30)

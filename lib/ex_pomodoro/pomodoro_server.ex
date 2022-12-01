@@ -170,7 +170,12 @@ defmodule ExPomodoro.PomodoroServer do
         "#{__MODULE__} :: Activity change activity=idle pid=#{inspect(self())}"
       )
 
-    state = %{state | pomodoro: Pomodoro.idle(pomodoro)}
+    %Pomodoro{} =
+      pomodoro =
+      pomodoro
+      |> Pomodoro.complete_round()
+
+    state = %{state | pomodoro: pomodoro}
 
     {:noreply, schedule_timers(state)}
   end
@@ -212,10 +217,23 @@ defmodule ExPomodoro.PomodoroServer do
     }
   end
 
+  # The pomodoro has finished a round and is requested to start a new round.
   defp resume_pomodoro(
          %{
            activity_ref: nil,
-           pomodoro: %Pomodoro{} = pomodoro,
+           pomodoro: %Pomodoro{activity: :idle} = pomodoro,
+           previous_activity: nil
+         } = state
+       ) do
+    %{state | pomodoro: Pomodoro.start_round(pomodoro), previous_activity: nil}
+  end
+
+  # The pomodoro has been paused and a previous activity that is tracked will be
+  # resumed.
+  defp resume_pomodoro(
+         %{
+           activity_ref: nil,
+           pomodoro: %Pomodoro{activity: :idle} = pomodoro,
            previous_activity: previous_activity
          } = state
        ) do
@@ -333,6 +351,10 @@ defmodule ExPomodoro.PomodoroServer do
       state
       | activity_ref: send_activity_change(break_duration)
     }
+  end
+
+  defp schedule_pomodoro(%{pomodoro: %Pomodoro{activity: :finished}} = state) do
+    %{state | activity_ref: nil}
   end
 
   # Pomodoro was paused, the activity_ref was assigned to nil
