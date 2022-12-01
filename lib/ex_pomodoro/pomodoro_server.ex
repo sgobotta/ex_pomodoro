@@ -293,23 +293,6 @@ defmodule ExPomodoro.PomodoroServer do
 
   defp schedule_pomodoro(
          %{
-           pomodoro: %Pomodoro{activity: :exercise} = pomodoro,
-           activity_ref: activity_ref
-         } = state
-       )
-       when is_reference(activity_ref) do
-    _timeleft = Process.cancel_timer(activity_ref)
-
-    %Pomodoro{exercise_duration: exercise_duration} = pomodoro
-
-    %{
-      state
-      | activity_ref: send_activity_change(exercise_duration)
-    }
-  end
-
-  defp schedule_pomodoro(
-         %{
            activity_ref: nil,
            pomodoro: %Pomodoro{activity: :break} = pomodoro,
            previous_activity_timeleft: previous_activity_timeleft
