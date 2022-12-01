@@ -254,7 +254,8 @@ defmodule ExPomodoro.PomodoroServer do
 
     %{
       state
-      | activity_ref: send_activity_change(current_duration)
+      | activity_ref: send_activity_change(current_duration),
+        previous_activity_timeleft: nil
     }
   end
 
@@ -301,7 +302,8 @@ defmodule ExPomodoro.PomodoroServer do
 
     %{
       state
-      | activity_ref: send_activity_change(break_duration)
+      | activity_ref: send_activity_change(break_duration),
+        previous_activity_timeleft: nil
     }
   end
 
