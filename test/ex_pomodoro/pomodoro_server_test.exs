@@ -230,7 +230,7 @@ defmodule ExPomodoro.PomodoroServerTest do
     setup do
       %Pomodoro{id: id} = pomodoro = do_new([])
 
-      args = [id: id]
+      args = [id: id, on_start: fn _state -> :ok end]
       pid = start_supervised!({PomodoroServer, args})
 
       %{pid: pid, pomodoro: pomodoro}
@@ -259,6 +259,7 @@ defmodule ExPomodoro.PomodoroServerTest do
     args =
       [
         id: pomodoro_id,
+        on_start: fn _state -> :ok end,
         timeout: Keyword.fetch!(opts, :timeout)
       ]
       |> Keyword.merge(opts)

@@ -108,11 +108,17 @@ defmodule ExPomodoro.PomodoroServer do
         "#{__MODULE__} :: Started process with pid=#{inspect(self())}, args=#{inspect(init_args)}"
       )
 
-    {:ok, initial_state(init_args), {:continue, init_args}}
+    continue_args = [on_start: Keyword.fetch!(init_args, :on_start)]
+
+    {:ok, initial_state(init_args), {:continue, continue_args}}
   end
 
   @impl GenServer
-  def handle_continue(_init_args, state) do
+  def handle_continue(
+        [on_start: on_start] = _continue_args,
+        %{pomodoro: %Pomodoro{} = pomodoro} = state
+      ) do
+    :ok = on_start.(pomodoro)
     {:noreply, schedule_timers(state)}
   end
 

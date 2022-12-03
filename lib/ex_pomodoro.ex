@@ -105,7 +105,7 @@ defmodule ExPomodoro do
   @spec get_by_id(Pomodoro.id()) ::
           {:ok, {pid(), Pomodoro.t()}} | not_found_response()
   defp get_by_id(id) do
-    case PomodoroSupervisor.get_child(PomodoroSupervisor, id) do
+    case PomodoroSupervisor.get_child(id) do
       {pid, %Pomodoro{id: ^id} = pomodoro} ->
         {:ok, {pid, pomodoro}}
 

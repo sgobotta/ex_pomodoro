@@ -13,6 +13,9 @@ defmodule ExPomodoro.PomodoroSupervisorTest do
     @supervisor_name :pomodoro_supervisor_test
 
     setup do
+      _registry_pid =
+        start_supervised!({Registry, keys: :unique, name: Registry.Pomodoro})
+
       pid = start_supervised!({PomodoroSupervisor, [name: @supervisor_name]})
 
       %{id: pomodoro_id} = PomodoroFixtures.valid_attrs()
@@ -33,22 +36,13 @@ defmodule ExPomodoro.PomodoroSupervisorTest do
       assert valid_pid?(pid)
     end
 
-    test "list_children/1 returns a list of pids", %{
-      pid: pid,
-      pomodoro: %Pomodoro{id: pomodoro_id}
-    } do
-      {:ok, child_pid} = start_child(pid, id: pomodoro_id)
-
-      assert Enum.member?(list_children(pid), child_pid)
-    end
-
     test "get_child/1 returns a pid and state", %{
       pid: pid,
       pomodoro: %Pomodoro{id: pomodoro_id}
     } do
       {:ok, child_pid} = start_child(pid, id: pomodoro_id)
 
-      {^child_pid, %{id: ^pomodoro_id} = state} = get_child(pid, pomodoro_id)
+      {^child_pid, %{id: ^pomodoro_id} = state} = get_child(pomodoro_id)
 
       valid_pid?(child_pid)
       assert is_map(state)
@@ -66,12 +60,15 @@ defmodule ExPomodoro.PomodoroSupervisorTest do
       refute valid_pid?(child_pid)
     end
 
-    defp start_child(pid, args), do: PomodoroSupervisor.start_child(pid, args)
+    defp start_child(pid, args),
+      do:
+        PomodoroSupervisor.start_child(
+          pid,
+          args |> Keyword.put(:on_start, fn _state -> :ok end)
+        )
 
-    defp list_children(pid), do: PomodoroSupervisor.list_children(pid)
-
-    defp get_child(pid, pomodoro_id),
-      do: PomodoroSupervisor.get_child(pid, pomodoro_id)
+    defp get_child(pomodoro_id),
+      do: PomodoroSupervisor.get_child(pomodoro_id)
 
     defp terminate_child(pid, child_pid),
       do: PomodoroSupervisor.terminate_child(pid, child_pid)

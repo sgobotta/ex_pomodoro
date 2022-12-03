@@ -29,31 +29,32 @@ defmodule ExPomodoro.PomodoroSupervisor do
   """
   @spec start_child(module(), keyword()) :: {:ok, pid()}
   def start_child(supervisor, args) do
-    DynamicSupervisor.start_child(supervisor, {PomodoroServer, args})
-  end
+    id = Keyword.fetch!(args, :id)
 
-  @doc """
-  Given a reference returns all supervisor children pids.
-  """
-  @spec list_children(module()) :: [pid()]
-  def list_children(supervisor) do
-    DynamicSupervisor.which_children(supervisor)
-    |> Enum.filter(fn
-      {_id, pid, :worker, _modules} when is_pid(pid) -> true
-      _child -> false
-    end)
-    |> Enum.map(fn {_id, pid, :worker, _modules} -> pid end)
+    on_start = fn state ->
+      {:ok, _registry_pid} = Registry.register(Registry.Pomodoro, id, state)
+
+      :ok
+    end
+
+    args = Keyword.put(args, :on_start, on_start)
+
+    DynamicSupervisor.start_child(supervisor, {PomodoroServer, args})
   end
 
   @doc """
   Given a cart id, returns `nil` or a tuple where the first component is a
   `#{PomodoroServer}` pid and the second component the cart server state.
   """
-  @spec get_child(module(), binary()) :: {pid(), ExPomodoro.Pomodoro.t()} | nil
-  def get_child(supervisor, id) do
-    list_children(supervisor)
-    |> Enum.map(&{&1, PomodoroServer.get_state(&1)})
-    |> Enum.find(fn {_pid, pomodoro} -> pomodoro.id == id end)
+  @spec get_child(String.t()) :: {pid(), ExPomodoro.Pomodoro.t()} | nil
+  def get_child(child_id) do
+    case Registry.lookup(Registry.Pomodoro, child_id) do
+      [] ->
+        nil
+
+      [{_pid, _state} = child] ->
+        child
+    end
   end
 
   @doc """

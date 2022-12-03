@@ -18,6 +18,7 @@ defmodule ExPomodoro.Supervisor do
   @impl true
   def init(_init_arg) do
     children = [
+      {Registry, keys: :unique, name: Registry.Pomodoro},
       PomodoroSupervisor
     ]
 

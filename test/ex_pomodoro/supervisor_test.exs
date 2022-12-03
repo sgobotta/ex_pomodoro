@@ -17,12 +17,18 @@ defmodule ExPomodoro.SupervisorTest do
     test "child_spec/2 spawns children", %{pid: pid} do
       children = Supervisor.which_children(pid)
 
-      assert length(children) == 1
+      assert length(children) == 2
 
-      {ExPomodoro.PomodoroSupervisor, child_pid, :supervisor, _modules} =
-        hd(children)
+      [pomodoro_supervisor, pomodoro_registry] = children
 
-      assert valid_pid?(child_pid)
+      {ExPomodoro.PomodoroSupervisor, pomodoro_supervisor_pid, :supervisor,
+       [ExPomodoro.PomodoroSupervisor]} = pomodoro_supervisor
+
+      {Registry.Pomodoro, pomodoro_registry_pid, :supervisor, [Registry]} =
+        pomodoro_registry
+
+      assert valid_pid?(pomodoro_supervisor_pid)
+      assert valid_pid?(pomodoro_registry_pid)
     end
   end
 
