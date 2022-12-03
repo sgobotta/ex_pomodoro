@@ -39,7 +39,7 @@ defmodule ExPomodoro.PomodoroServerTest do
       assert Process.alive?(pid)
 
       # Verify
-      :ok = sleep_with_ratio(1)
+      :ok = sleep_with_ratio(1.2)
       refute Process.alive?(pid)
     end
   end
