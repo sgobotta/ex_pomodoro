@@ -1,0 +1,78 @@
+name: Test
+
+description: Run unit tests
+
+inputs:
+  ELIXIR_VERSION:
+    description: Elixir version
+    required: true
+  GITHUB_TOKEN:
+    description: A github token
+    required: true
+  MIX_ENV:
+    default: test
+    description: The current elixir env
+    required: false
+  OTP_VERSION:
+    description: OTP version
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    # Checkout code ------------------------------------------------------------
+    - name: Check out code
+      uses: actions/checkout@v2.3.4
+
+    # Setup Elixir/OTP versions ------------------------------------------------
+    - name: Set up Elixir
+      uses: erlef/setup-elixir@v1
+      with:
+        elixir-version: ${{ inputs.ELIXIR_VERSION }}
+        otp-version: ${{ inputs.OTP_VERSION }}
+
+    # Print version names ------------------------------------------------------
+    - name: Output Elixir version
+      shell: bash
+      run: elixir --version
+
+    # Set vars for the cache step ----------------------------------------------
+    - name: Set mix file hash
+      id: set_vars
+      shell: bash
+      run: |
+        mix_hash="${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}"
+        echo "::set-output name=mix_hash::$mix_hash"
+
+    # Restores PLT cache -------------------------------------------------------
+    - name: Cache files
+      id: test-cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          deps
+          _build
+        key: ${{ runner.os }}-test-mix-${{ steps.set_vars.outputs.mix_hash }}
+        restore-keys: |
+          ${{ runner.os }}-test-mix-
+
+    # Get and build all the deps -----------------------------------------------
+    - name: Install Dependencies
+      shell: bash
+      run: |
+        mix setup
+      env:
+        MIX_ENV: ${{ inputs.MIX_ENV }}
+
+    # Run tests ----------------------------------------------------------------
+    - name: Run tests with coverage
+      shell: bash
+      env:
+        # Permissions env
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+        # General env
+        MIX_ENV: ${{ inputs.MIX_ENV }}
+
+      run: >
+        GITHUB_TOKEN=${GITHUB_TOKEN}
+        mix coveralls.github -u
