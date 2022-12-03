@@ -29,8 +29,7 @@ defmodule ExPomodoro do
   This is the main function to start a pomodoro.
 
   Given an `id` and a keyword of options returns a successful response if a
-  Pomodoro has been started or a failed response if a Pomodoro with that `id`
-  has been found. Either the successful or the failed repsonse returns the
+  Pomodoro has been started or resumed. Every successful responses returns the
   current `#{Pomodoro}` struct.
 
   ### Options
