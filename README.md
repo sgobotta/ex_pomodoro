@@ -9,14 +9,16 @@
 <p align="center" style="margin-top: 14px;">
   <a href="https://github.com/sgobotta/ex_pomodoro/actions/workflows/ci.yml">
     <img
-      src="https://github.com/sgobotta/ex_pomodoro/actions/workflows/test.yml/badge.svg"
+      src="https://github.com/sgobotta/ex_pomodoro/actions/workflows/ci.yml/badge.svg?branch=main"
       alt="CI Status"
     >
   </a>
-  <a href="https://coveralls.io/github/sgobotta/ex_pomodoro">
+  <a
+    href='https://coveralls.io/github/sgobotta/ex_pomodoro?branch=main'
+  >
     <img
-      src="https://coveralls.io/repos/github/sgobotta/ex_pomodoro/badge.svg"
-      alt="Test Coverage Status"
+      src='https://coveralls.io/repos/github/sgobotta/ex_pomodoro/badge.svg?branch=main'
+      alt='Coverage Status'
     />
   </a>
 </p>
