@@ -97,7 +97,7 @@ defmodule ExPomodoro.PomodoroServer do
   def init(init_args) do
     :ok =
       Logger.debug(
-        "#{__MODULE__} :: Started process with pid=#{inspect(self())}, args=#{inspect(init_args)}"
+        "#{__MODULE__} :: Started process with pid=#{inspect(self())}, init_args=#{inspect(init_args)}"
       )
 
     continue_args = [on_start: Keyword.fetch!(init_args, :on_start)]
@@ -107,10 +107,16 @@ defmodule ExPomodoro.PomodoroServer do
 
   @impl GenServer
   def handle_continue(
-        [on_start: on_start] = _continue_args,
+        [on_start: on_start] = continue_args,
         %{pomodoro: %Pomodoro{} = pomodoro} = state
       ) do
     :ok = on_start.(pomodoro)
+
+    :ok =
+      Logger.debug(
+        "#{__MODULE__} :: Registered process with pid=#{inspect(self())} id=#{pomodoro.id} on_continue_args=#{inspect(continue_args)}"
+      )
+
     {:noreply, schedule_timers(state)}
   end
 
@@ -119,11 +125,22 @@ defmodule ExPomodoro.PomodoroServer do
         :get_state,
         _from,
         %{pomodoro: %Pomodoro{} = pomodoro} = state
-      ),
-      do: {:reply, pomodoro, state}
+      ) do
+    :ok =
+      Logger.debug(
+        "#{__MODULE__}.get_state :: #{state.pomodoro.activity} -> idle pid=#{inspect(self())}"
+      )
+
+    {:reply, pomodoro, state}
+  end
 
   @impl GenServer
   def handle_call(:pause, _from, state) do
+    :ok =
+      Logger.debug(
+        "#{__MODULE__}.pause :: #{state.pomodoro.activity} -> idle pid=#{inspect(self())}"
+      )
+
     state =
       state
       |> pause_pomodoro()
@@ -139,6 +156,11 @@ defmodule ExPomodoro.PomodoroServer do
       |> resume_pomodoro()
       |> schedule_timers()
 
+    :ok =
+      Logger.debug(
+        "#{__MODULE__}.resume :: idle -> #{state.pomodoro.activity} pid=#{inspect(self())}"
+      )
+
     {:reply, {:ok, state.pomodoro}, state}
   end
 
@@ -149,7 +171,7 @@ defmodule ExPomodoro.PomodoroServer do
       ) do
     :ok =
       Logger.debug(
-        "#{__MODULE__} :: Activity change activity=break pid=#{inspect(self())}"
+        "#{__MODULE__}.on_activity_change :: exercise -> break pid=#{inspect(self())}"
       )
 
     state = %{state | pomodoro: Pomodoro.break(pomodoro)}
@@ -164,7 +186,7 @@ defmodule ExPomodoro.PomodoroServer do
       ) do
     :ok =
       Logger.debug(
-        "#{__MODULE__} :: Activity change activity=idle pid=#{inspect(self())}"
+        "#{__MODULE__}.on_activity_change :: break -> idle pid=#{inspect(self())}"
       )
 
     state = %{state | pomodoro: Pomodoro.complete_round(pomodoro)}
