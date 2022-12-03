@@ -60,6 +60,7 @@ defmodule ExPomodoro.PomodoroSupervisor do
   @doc """
   Given a reference and a child pid, terminates a `#{PomodoroServer}` process.
   """
+  @spec terminate_child(module(), pid()) :: :ok | {:error, :not_found}
   def terminate_child(supervisor, pid) do
     DynamicSupervisor.terminate_child(supervisor, pid)
   end

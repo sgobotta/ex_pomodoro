@@ -54,7 +54,7 @@ defmodule ExPomodoro.PomodoroServer do
   @doc """
   Given a pid, returns the current state.
   """
-  @spec get_state(pid()) :: state()
+  @spec get_state(pid()) :: Pomodoro.t()
   def get_state(pid), do: GenServer.call(pid, :get_state)
 
   @doc """
@@ -66,7 +66,7 @@ defmodule ExPomodoro.PomodoroServer do
   @doc """
   Given a pid, resumes a pomodoro and returns the current pomodoro state.
   """
-  @spec resume(pid()) :: {:ok, state()}
+  @spec resume(pid()) :: {:ok, Pomodoro.t()}
   def resume(pid), do: GenServer.call(pid, :resume)
 
   @doc """
@@ -107,14 +107,14 @@ defmodule ExPomodoro.PomodoroServer do
 
   @impl GenServer
   def handle_continue(
-        [on_start: on_start] = continue_args,
+        [on_start: on_start] = _continue_args,
         %{pomodoro: %Pomodoro{} = pomodoro} = state
       ) do
     :ok = on_start.(pomodoro)
 
     :ok =
       Logger.debug(
-        "#{__MODULE__} :: Registered process with pid=#{inspect(self())} id=#{pomodoro.id} on_continue_args=#{inspect(continue_args)}"
+        "#{__MODULE__} :: Registered process with pid=#{inspect(self())} id=#{pomodoro.id}"
       )
 
     {:noreply, schedule_timers(state)}
@@ -128,7 +128,7 @@ defmodule ExPomodoro.PomodoroServer do
       ) do
     :ok =
       Logger.debug(
-        "#{__MODULE__}.get_state :: #{state.pomodoro.activity} -> idle pid=#{inspect(self())}"
+        "#{__MODULE__}.get_state :: #{state.pomodoro.activity} pid=#{inspect(self())}"
       )
 
     {:reply, pomodoro, state}
@@ -209,6 +209,14 @@ defmodule ExPomodoro.PomodoroServer do
   # ----------------------------------------------------------------------------
   # State helpers
   #
+
+  defp pause_pomodoro(
+         %{
+           pomodoro: %Pomodoro{activity: activity}
+         } = state
+       )
+       when activity in [:idle, :finished],
+       do: state
 
   defp pause_pomodoro(
          %{

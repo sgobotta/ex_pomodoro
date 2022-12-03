@@ -10,7 +10,10 @@ defmodule ExPomodoro do
   }
 
   @type success_response :: {:ok, Pomodoro.t()}
-  @type already_started_response :: {:error, {:already_started, Pomodoro.t()}}
+  @type started_response :: {:ok, {:started, pid()}}
+  @type already_started_response :: {:ok, {:already_started, Pomodoro.t()}}
+  @type already_finished_response :: {:ok, {:already_finished, Pomodoro.t()}}
+  @type resumed_response :: {:ok, {:resumed, Pomodoro.t()}}
   @type not_found_response :: {:error, :not_found}
 
   @doc """
@@ -42,13 +45,22 @@ defmodule ExPomodoro do
       {:ok, %ExPomodoro.Pomodoro{id: "some id", activity: :exercise}}
 
       iex> ExPomodoro.start("some_id", [])
-      {:error, {:already_started, %Pomodoro{id: "some id"}}}
+      {:ok, {:already_started, %Pomodoro{id: "some id"}}}
+
+      iex> ExPomodoro.start("some_id", [])
+      {:ok, {:already_finished, %Pomodoro{id: "some id"}}}
+
+      iex> ExPomodoro.start("some_id", [])
+      {:ok, {:resumed, %Pomodoro{id: "some id"}}}
 
   """
   @spec start(Pomodoro.id(), Pomodoro.opts()) ::
-          success_response() | already_started_response()
-  def start(id, opts) do
-    with {:ok, pid} <- start_child(id, opts),
+          success_response()
+          | already_started_response()
+          | already_finished_response()
+          | resumed_response()
+  def start(id, opts \\ []) do
+    with {:ok, {:started, pid}} <- start_child(id, opts),
          {:ok, {^pid, %Pomodoro{} = pomodoro}} <- get_by_id(id) do
       {:ok, pomodoro}
     end
@@ -105,27 +117,40 @@ defmodule ExPomodoro do
   @spec get_by_id(Pomodoro.id()) ::
           {:ok, {pid(), Pomodoro.t()}} | not_found_response()
   defp get_by_id(id) do
-    case PomodoroSupervisor.get_child(id) do
-      {pid, %Pomodoro{id: ^id} = pomodoro} ->
-        {:ok, {pid, pomodoro}}
-
+    with {pid, %Pomodoro{id: ^id}} <- PomodoroSupervisor.get_child(id),
+         %Pomodoro{} = pomodoro <- PomodoroServer.get_state(pid) do
+      {:ok, {pid, pomodoro}}
+    else
       nil ->
         {:error, :not_found}
     end
   end
 
   @spec start_child(Pomodoro.id(), Pomodoro.opts()) ::
-          {:ok, pid()} | {:error, {:already_started, Pomodoro.t()}}
+          started_response()
+          | already_started_response()
+          | already_finished_response()
+          | resumed_response()
   defp start_child(id, opts) do
     case get_by_id(id) do
+      {:ok, {pid, %Pomodoro{activity: :idle}}} ->
+        {:ok, %Pomodoro{} = pomodoro} = PomodoroServer.resume(pid)
+        {:ok, {:resumed, pomodoro}}
+
+      {:ok, {_pid, %Pomodoro{activity: :finished} = pomodoro}} ->
+        {:ok, {:already_finished, pomodoro}}
+
       {:ok, {_pid, %Pomodoro{} = pomodoro}} ->
-        {:error, {:already_started, pomodoro}}
+        {:noop, {:already_started, pomodoro}}
 
       {:error, :not_found} ->
-        PomodoroSupervisor.start_child(
-          PomodoroSupervisor,
-          Keyword.merge([id: id], opts)
-        )
+        {:ok, pid} =
+          PomodoroSupervisor.start_child(
+            PomodoroSupervisor,
+            Keyword.merge([id: id], opts)
+          )
+
+        {:ok, {:started, pid}}
     end
   end
 end

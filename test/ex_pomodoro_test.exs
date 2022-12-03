@@ -1,6 +1,7 @@
 defmodule ExPomodoroTest do
   @moduledoc false
 
+  use ExPomodoro.RuntimeCase, ratio: 1 / 32
   use ExUnit.Case
   doctest ExPomodoro, only: []
 
@@ -19,7 +20,7 @@ defmodule ExPomodoroTest do
   describe "#{ExPomodoro}.start/2" do
     setup [:setup_pomodoro_server]
 
-    test "starts a new #{ExPomodoro.PomodoroServer} child" do
+    test "starts a new #{ExPomodoro.PomodoroServer} child with no options" do
       id = "some id"
 
       {:ok,
@@ -31,18 +32,35 @@ defmodule ExPomodoroTest do
          rounds: 4,
          current_round: 1,
          current_duration: 0
-       }} = do_start(id, [])
+       }} = do_start(id)
     end
 
-    test "returns the pomodoro details when the child already exists" do
+    test "starts a new #{ExPomodoro.PomodoroServer} child with options" do
       id = "some id"
 
       {:ok,
        %Pomodoro{
-         id: ^id
-       }} = do_start(id, [])
+         id: ^id,
+         activity: :exercise,
+         exercise_duration: 750_000,
+         break_duration: 200_000,
+         rounds: 8,
+         current_round: 1,
+         current_duration: 0
+       }} =
+        do_start(id,
+          exercise_duration: 750_000,
+          break_duration: 200_000,
+          rounds: 8
+        )
+    end
 
-      {:error,
+    test "when the child already exists returns the pomodoro details" do
+      id = "some id"
+
+      {:ok, %Pomodoro{id: ^id}} = do_start(id, [])
+
+      {:noop,
        {:already_started,
         %Pomodoro{
           id: ^id,
@@ -52,6 +70,46 @@ defmodule ExPomodoroTest do
           rounds: 4,
           current_round: 1,
           current_duration: 0
+        }}} = do_start(id, [])
+    end
+
+    test "when the child has been resumed returns the pomodoro details" do
+      id = "some id"
+
+      {:ok, %Pomodoro{id: ^id}} = do_start(id, [])
+      {:ok, %Pomodoro{id: ^id}} = do_pause(id)
+
+      {:ok,
+       {:resumed,
+        %Pomodoro{
+          id: ^id,
+          activity: :exercise,
+          exercise_duration: 1_500_000,
+          break_duration: 300_000,
+          rounds: 4,
+          current_round: 1
+        }}} = do_start(id, [])
+    end
+
+    test "when the child has already finished returns the pomodoro details" do
+      id = "some id"
+
+      {:ok, %Pomodoro{id: ^id}} =
+        do_start(id,
+          exercise_duration: ratio(5),
+          break_duration: ratio(2),
+          rounds: 1
+        )
+
+      :ok = sleep_with_ratio(8)
+
+      {:ok,
+       {:already_finished,
+        %Pomodoro{
+          id: ^id,
+          activity: :finished,
+          rounds: 1,
+          current_round: 1
         }}} = do_start(id, [])
     end
   end
@@ -98,6 +156,7 @@ defmodule ExPomodoroTest do
 
   defp do_child_spec(opts), do: ExPomodoro.child_spec(opts)
 
+  defp do_start(id), do: ExPomodoro.start(id)
   defp do_start(id, opts), do: ExPomodoro.start(id, opts)
 
   defp do_get(id), do: ExPomodoro.get(id)

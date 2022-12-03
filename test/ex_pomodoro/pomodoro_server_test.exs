@@ -141,6 +141,46 @@ defmodule ExPomodoro.PomodoroServerTest do
       :ok = sleep_with_ratio(10)
       refute Process.alive?(pid)
     end
+
+    test "when the pomodoro is already paused has no effect" do
+      # Setup
+      args = [
+        timeout: ratio(10),
+        exercise_duration: ratio(7),
+        break_duration: ratio(3),
+        rounds: 1
+      ]
+
+      pid = start_server(args)
+      assert is_pid(pid)
+
+      assert Process.alive?(pid)
+      :ok = sleep_with_ratio(2)
+
+      {:ok, %Pomodoro{activity: :idle, current_round: 1} = pomodoro} =
+        do_pause(pid)
+
+      # Exercise
+      {:ok, %Pomodoro{} = ^pomodoro} = do_pause(pid)
+
+      # Verify
+      %Pomodoro{
+        activity: :idle,
+        current_round: 1
+      } = do_get_state(pid)
+
+      # After some time the activity did not change.
+      :ok = sleep_with_ratio(7)
+
+      %Pomodoro{
+        activity: :idle,
+        current_round: 1
+      } = do_get_state(pid)
+
+      # Teardown
+      :ok = sleep_with_ratio(10)
+      refute Process.alive?(pid)
+    end
   end
 
   describe "#{PomodoroServer}.resume/1" do
