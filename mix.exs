@@ -5,7 +5,7 @@ defmodule ExPomodoro.MixProject do
     [
       app: :ex_pomodoro,
       version: "0.1.0",
-      elixir: "~> 1.13",
+      elixir: "~> 1.11",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
