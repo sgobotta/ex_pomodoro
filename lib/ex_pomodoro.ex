@@ -23,14 +23,14 @@ defmodule ExPomodoro do
   `#{ExPomodoro}` commands.
   """
   @spec child_spec(keyword) :: Supervisor.child_spec()
-  defdelegate child_spec(options), to: ExPomodoro.Supervisor
+  defdelegate child_spec(options \\ []), to: ExPomodoro.Supervisor
 
   @doc """
   This is the main function to start a pomodoro.
 
-  Given an `id` and a keyword of options returns a successful response if a
-  Pomodoro has been started or resumed. Every successful responses returns the
-  current `#{Pomodoro}` struct.
+  Given an `id` and an optional keyword of options returns a successful response
+  if a Pomodoro has been started or resumed. Every successful responses returns
+  the current `#{Pomodoro}` struct.
 
   ### Options
 
@@ -40,16 +40,40 @@ defmodule ExPomodoro do
 
   ### Examples:
 
-      iex> ExPomodoro.start("some id", [])
-      {:ok, %ExPomodoro.Pomodoro{id: "some id", activity: :exercise}}
+      # Start a pomodoro with default options.
+      iex> ExPomodoro.start("some id")
+      {:ok, %ExPomodoro.Pomodoro{
+        id: "some id",
+        activity: :exercise,
+        exercise_duration: 1_500_000,
+        break_duration: 300_000,
+        rounds: 4
+      }}
 
-      iex> ExPomodoro.start("some_id", [])
+      # Start a pomodoro with some options.
+      iex> ExPomodoro.start("some id", [
+      ...>  exercise_duration: 150_000,
+      ...>  break_duration: 25_000,
+      ...>  rounds: 8
+      ...> ])
+      {:ok, %ExPomodoro.Pomodoro{
+        id: "some id",
+        activity: :exercise,
+        exercise_duration: 150_000,
+        break_duration: 25_000,
+        rounds: 8
+      }}
+
+      # Start a pomodoro that is already running.
+      iex> ExPomodoro.start("some_id")
       {:ok, {:already_started, %Pomodoro{id: "some id"}}}
 
-      iex> ExPomodoro.start("some_id", [])
+      # Start a pomodoro that already finished.
+      iex> ExPomodoro.start("some_id")
       {:ok, {:already_finished, %Pomodoro{id: "some id"}}}
 
-      iex> ExPomodoro.start("some_id", [])
+      # Start a pomodoro that was paused or finished a break.
+      iex> ExPomodoro.start("some_id")
       {:ok, {:resumed, %Pomodoro{id: "some id"}}}
 
   """
@@ -73,9 +97,11 @@ defmodule ExPomodoro do
 
   ### Examples:
 
+      # Return a pomodoro.
       iex> ExPomodoro.get("some id")
       {:ok, %ExPomodoro.Pomodoro{id: "some id"}}
 
+      # Get a pomodoro that does not exist.
       iex> ExPomodoro.get("some other id")
       {:error, :not_found}
 
@@ -97,9 +123,12 @@ defmodule ExPomodoro do
 
   ### Examples:
 
+      # Pause a pomodoro and returns the remaining timeleft to complete the
+      # current activity.
       iex> ExPomodoro.pause("some id")
-      {:ok, %Pomodoro{id: "some id", activity: :idle}}
+      {:ok, %Pomodoro{id: "some id", activity: :idle, current_duration: timeleft}}
 
+      # Pause a pomodoro that does not exist.
       iex> ExPomodoro.pause("some id")
       {:error, :not_found}
 
