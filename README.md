@@ -58,6 +58,26 @@ def deps do
 end
 ```
 
+## Setup
+
+ExPomodoro uses a `Supervisor` and `GenServer` to perform runtime operations for pomodoros. Add the `ExPomodoro` child spec to your application tree.
+
+*application.ex:*
+
+```elixir
+@impl true
+def start(_type, _args) do
+  children = [
+      ...
+
+      ExPomodoro # <- Add ExPomodoro to the children array
+    ]
+
+  opts = [strategy: :one_for_one, name: MyApp.Supervisor]
+  Supervisor.start_link(children, opts)
+end
+```
+
 ## Usage
 
 **TODO: add usage instructions.**
