@@ -291,7 +291,7 @@ defmodule ExPomodoro.PomodoroServer do
            activity_ref: nil,
            pomodoro: %Pomodoro{
              activity: :break,
-             break_duration: break_duration
+             current_duration: current_duration
            },
            previous_activity_timeleft: previous_activity_timeleft
          } = state
@@ -299,7 +299,7 @@ defmodule ExPomodoro.PomodoroServer do
        when is_integer(previous_activity_timeleft),
        do: %{
          state
-         | activity_ref: send_activity_change(break_duration),
+         | activity_ref: send_activity_change(current_duration),
            previous_activity_timeleft: nil
        }
 
