@@ -230,9 +230,9 @@ defmodule ExPomodoro.PomodoroServerTest do
       %Pomodoro{
         activity: :exercise,
         current_round: 2
-        } = do_get_state(pid)
+      } = do_get_state(pid)
 
-        :ok = sleep_with_ratio(6)
+      :ok = sleep_with_ratio(6)
 
       %Pomodoro{
         activity: :break,
