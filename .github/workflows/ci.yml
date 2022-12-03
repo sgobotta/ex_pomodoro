@@ -8,14 +8,6 @@ on:
     # This action is not triggered when markdown files are modified.
     paths-ignore:
       - '**.md'
-  # Triggers on push to the following branches
-  push:
-    branches:
-      - "main"
-      - "dev"
-    # This action is not triggered when markdown files are modified.
-    paths-ignore:
-      - '**.md'
 
 env:
   # Permissions env
