@@ -10,7 +10,10 @@ defmodule ExPomodoro do
   }
 
   @type success_response :: {:ok, Pomodoro.t()}
-  @type already_started_response :: {:error, {:already_started, Pomodoro.t()}}
+  @type started_response :: {:ok, {:started, pid()}}
+  @type already_started_response :: {:ok, {:already_started, Pomodoro.t()}}
+  @type already_finished_response :: {:ok, {:already_finished, Pomodoro.t()}}
+  @type resumed_response :: {:ok, {:resumed, Pomodoro.t()}}
   @type not_found_response :: {:error, :not_found}
 
   @doc """
@@ -20,15 +23,14 @@ defmodule ExPomodoro do
   `#{ExPomodoro}` commands.
   """
   @spec child_spec(keyword) :: Supervisor.child_spec()
-  defdelegate child_spec(options), to: ExPomodoro.Supervisor
+  defdelegate child_spec(options \\ []), to: ExPomodoro.Supervisor
 
   @doc """
   This is the main function to start a pomodoro.
 
-  Given an `id` and a keyword of options returns a successful response if a
-  Pomodoro has been started or a failed response if a Pomodoro with that `id`
-  has been found. Either the successful or the failed repsonse returns the
-  current `#{Pomodoro}` struct.
+  Given an `id` and an optional keyword of options returns a successful response
+  if a Pomodoro has been started or resumed. Every successful responses returns
+  the current `#{Pomodoro}` struct.
 
   ### Options
 
@@ -38,17 +40,50 @@ defmodule ExPomodoro do
 
   ### Examples:
 
-      iex> ExPomodoro.start("some id", [])
-      {:ok, %ExPomodoro.Pomodoro{id: "some id", activity: :exercise}}
+      # Start a pomodoro with default options.
+      iex> ExPomodoro.start("some id")
+      {:ok, %ExPomodoro.Pomodoro{
+        id: "some id",
+        activity: :exercise,
+        exercise_duration: 1_500_000,
+        break_duration: 300_000,
+        rounds: 4
+      }}
 
-      iex> ExPomodoro.start("some_id", [])
-      {:error, {:already_started, %Pomodoro{id: "some id"}}}
+      # Start a pomodoro with some options.
+      iex> ExPomodoro.start("some id", [
+      ...>  exercise_duration: 150_000,
+      ...>  break_duration: 25_000,
+      ...>  rounds: 8
+      ...> ])
+      {:ok, %ExPomodoro.Pomodoro{
+        id: "some id",
+        activity: :exercise,
+        exercise_duration: 150_000,
+        break_duration: 25_000,
+        rounds: 8
+      }}
+
+      # Start a pomodoro that is already running.
+      iex> ExPomodoro.start("some_id")
+      {:ok, {:already_started, %Pomodoro{id: "some id"}}}
+
+      # Start a pomodoro that already finished.
+      iex> ExPomodoro.start("some_id")
+      {:ok, {:already_finished, %Pomodoro{id: "some id"}}}
+
+      # Start a pomodoro that was paused or finished a break.
+      iex> ExPomodoro.start("some_id")
+      {:ok, {:resumed, %Pomodoro{id: "some id"}}}
 
   """
   @spec start(Pomodoro.id(), Pomodoro.opts()) ::
-          success_response() | already_started_response()
-  def start(id, opts) do
-    with {:ok, pid} <- start_child(id, opts),
+          success_response()
+          | already_started_response()
+          | already_finished_response()
+          | resumed_response()
+  def start(id, opts \\ []) do
+    with {:ok, {:started, pid}} <- start_child(id, opts),
          {:ok, {^pid, %Pomodoro{} = pomodoro}} <- get_by_id(id) do
       {:ok, pomodoro}
     end
@@ -62,9 +97,11 @@ defmodule ExPomodoro do
 
   ### Examples:
 
+      # Return a pomodoro.
       iex> ExPomodoro.get("some id")
       {:ok, %ExPomodoro.Pomodoro{id: "some id"}}
 
+      # Get a pomodoro that does not exist.
       iex> ExPomodoro.get("some other id")
       {:error, :not_found}
 
@@ -86,9 +123,12 @@ defmodule ExPomodoro do
 
   ### Examples:
 
+      # Pause a pomodoro and returns the remaining timeleft to complete the
+      # current activity.
       iex> ExPomodoro.pause("some id")
-      {:ok, %Pomodoro{id: "some id", activity: :idle}}
+      {:ok, %Pomodoro{id: "some id", activity: :idle, current_duration: timeleft}}
 
+      # Pause a pomodoro that does not exist.
       iex> ExPomodoro.pause("some id")
       {:error, :not_found}
 
@@ -105,27 +145,41 @@ defmodule ExPomodoro do
   @spec get_by_id(Pomodoro.id()) ::
           {:ok, {pid(), Pomodoro.t()}} | not_found_response()
   defp get_by_id(id) do
-    case PomodoroSupervisor.get_child(id) do
-      {pid, %Pomodoro{id: ^id} = pomodoro} ->
-        {:ok, {pid, pomodoro}}
-
+    with {pid, %Pomodoro{id: ^id}} <- PomodoroSupervisor.get_child(id),
+         %Pomodoro{} = pomodoro <- PomodoroServer.get_state(pid) do
+      {:ok, {pid, pomodoro}}
+    else
       nil ->
         {:error, :not_found}
     end
   end
 
   @spec start_child(Pomodoro.id(), Pomodoro.opts()) ::
-          {:ok, pid()} | {:error, {:already_started, Pomodoro.t()}}
+          started_response()
+          | already_started_response()
+          | already_finished_response()
+          | resumed_response()
   defp start_child(id, opts) do
     case get_by_id(id) do
-      {:ok, {_pid, %Pomodoro{} = pomodoro}} ->
-        {:error, {:already_started, pomodoro}}
+      {:ok, {pid, %Pomodoro{activity: :idle}}} ->
+        {:ok, %Pomodoro{} = pomodoro} = PomodoroServer.resume(pid)
+        {:ok, {:resumed, pomodoro}}
+
+      {:ok, {_pid, %Pomodoro{activity: :finished} = pomodoro}} ->
+        {:ok, {:already_finished, pomodoro}}
+
+      {:ok, {_pid, %Pomodoro{activity: activity} = pomodoro}}
+      when activity in [:exercise, :break] ->
+        {:ok, {:already_started, pomodoro}}
 
       {:error, :not_found} ->
-        PomodoroSupervisor.start_child(
-          PomodoroSupervisor,
-          Keyword.merge([id: id], opts)
-        )
+        {:ok, pid} =
+          PomodoroSupervisor.start_child(
+            PomodoroSupervisor,
+            Keyword.merge([id: id], opts)
+          )
+
+        {:ok, {:started, pid}}
     end
   end
 end

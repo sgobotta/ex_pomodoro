@@ -125,7 +125,7 @@ defmodule ExPomodoro.Pomodoro do
           rounds: current_round
         } = pomodoro
       ),
-      do: %__MODULE__{pomodoro | activity: :finished}
+      do: %__MODULE__{pomodoro | activity: :finished, current_duration: 0}
 
   def complete_round(
         %__MODULE__{
@@ -135,7 +135,7 @@ defmodule ExPomodoro.Pomodoro do
         } = pomodoro
       )
       when current_round < rounds,
-      do: %__MODULE__{pomodoro | activity: :idle}
+      do: %__MODULE__{pomodoro | activity: :idle, current_duration: 0}
 
   @doc """
   Given a #{__MODULE__} struct and  options, returns a new one with it's fields

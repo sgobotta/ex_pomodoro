@@ -2,6 +2,38 @@
 
 **The `ex_pomodoro` program is an excuse to play around and experiment with the Elixir `Supervisor`, `DynamicSupervisor` and `GenServer` modules.**
 
+<h4 align="center">
+  An Elixir 🍅
+</h4>
+
+<p align="center" style="margin-top: 14px;">
+  <a href="https://github.com/sgobotta/ex_pomodoro/actions/workflows/ci.yml">
+    <img
+      src="https://github.com/sgobotta/ex_pomodoro/actions/workflows/ci.yml/badge.svg?branch=main"
+      alt="CI Status"
+    >
+  </a>
+  <a
+    href='https://coveralls.io/github/sgobotta/ex_pomodoro?branch=main'
+  >
+    <img
+      src='https://coveralls.io/repos/github/sgobotta/ex_pomodoro/badge.svg?branch=main'
+      alt='Coverage Status'
+    />
+  </a>
+</p>
+
+<p align="center" style="margin-top: 14px;">
+  <a
+    href="https://github.com/sgobotta/ex_pomodoro/blob/main/LICENSE"
+  >
+    <img
+      src="https://img.shields.io/badge/License-GPL%20v3-white.svg"
+      alt="License"
+    >
+  </a>
+</p>
+
 ## Installation
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed
@@ -23,6 +55,26 @@ def deps do
     {:ex_pomodoro,
      git: "git@github.com:sgobotta/ex_pomodoro.git", branch: "0.1.0"}
   ]
+end
+```
+
+## Setup
+
+ExPomodoro uses a `Supervisor` and `GenServer` to perform runtime operations for pomodoros. Add the `ExPomodoro` child spec to your application tree.
+
+*application.ex:*
+
+```elixir
+@impl true
+def start(_type, _args) do
+  children = [
+      ...
+
+      ExPomodoro # <- Add ExPomodoro to the children array
+    ]
+
+  opts = [strategy: :one_for_one, name: MyApp.Supervisor]
+  Supervisor.start_link(children, opts)
 end
 ```
 
