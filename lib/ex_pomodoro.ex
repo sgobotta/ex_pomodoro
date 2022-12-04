@@ -11,7 +11,7 @@ defmodule ExPomodoro do
 
   @type success_response :: {:ok, Pomodoro.t()}
   @type started_response :: {:ok, {:started, pid()}}
-  @type already_started_response :: {:ok, {:already_started, Pomodoro.t()}}
+  @type already_started_response :: {:noop, {:already_started, Pomodoro.t()}}
   @type already_finished_response :: {:ok, {:already_finished, Pomodoro.t()}}
   @type resumed_response :: {:ok, {:resumed, Pomodoro.t()}}
   @type not_found_response :: {:error, :not_found}
@@ -168,7 +168,8 @@ defmodule ExPomodoro do
       {:ok, {_pid, %Pomodoro{activity: :finished} = pomodoro}} ->
         {:ok, {:already_finished, pomodoro}}
 
-      {:ok, {_pid, %Pomodoro{} = pomodoro}} ->
+      {:ok, {_pid, %Pomodoro{activity: activity} = pomodoro}}
+      when activity in [:exercise, :work] ->
         {:noop, {:already_started, pomodoro}}
 
       {:error, :not_found} ->
