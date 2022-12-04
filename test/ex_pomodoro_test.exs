@@ -60,7 +60,7 @@ defmodule ExPomodoroTest do
 
       {:ok, %Pomodoro{id: ^id}} = do_start(id, [])
 
-      {:noop,
+      {:ok,
        {:already_started,
         %Pomodoro{
           id: ^id,
