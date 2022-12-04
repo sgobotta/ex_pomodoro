@@ -17,6 +17,10 @@ defmodule ExPomodoro.MixProject do
         "coveralls.post": :test,
         "coveralls.html": :test
       ],
+      # Hex
+      description: description(),
+      package: package(),
+      source_url: "https://github.com/sgobotta/ex_pomodoro",
       # Docs
       name: "ExPomodoro",
       docs: [
@@ -71,6 +75,19 @@ defmodule ExPomodoro.MixProject do
       "check.format": ["format --check-formatted"],
       "check.credo": ["credo --strict"],
       "check.dialyzer": ["dialyzer --format dialyxir"]
+    ]
+  end
+
+  defp description() do
+    "An Elixir Pomodoro for tasks and time management"
+  end
+
+  defp package() do
+    [
+      files: ~w(doc lib mix.exs README* LICENSE*),
+      name: "ex_pomodoro",
+      licenses: ["MIT"],
+      links: %{"Github" => "https://github.com/sgobotta/ex_pomodoro"}
     ]
   end
 end
