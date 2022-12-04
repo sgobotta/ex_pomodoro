@@ -34,8 +34,10 @@ defmodule ExPomodoro do
 
   ### Options
 
-  * `exercise_duration`: The duration in minutes of the exercise duration, `non_negative_integer()`.
-  * `break_duration`: The duration in minutes of the break duration, `non_negative_integer()`.
+  * `exercise_duration`: The duration in milliseconds of the exercise duration,
+  `non_negative_integer()`.
+  * `break_duration`: The duration in milliseconds of the break duration,
+  `non_negative_integer()`.
   * `rounds`: The number of rounds until a long break, `non_negative_integer()`.
 
   ### Examples:
