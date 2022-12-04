@@ -86,7 +86,7 @@ defmodule ExPomodoro.MixProject do
     [
       files: ~w(doc lib mix.exs README* LICENSE*),
       name: "ex_pomodoro",
-      licenses: ["MIT"],
+      licenses: ["GPL-3.0-or-later"],
       links: %{"Github" => "https://github.com/sgobotta/ex_pomodoro"}
     ]
   end
