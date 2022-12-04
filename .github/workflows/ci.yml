@@ -1,6 +1,11 @@
 name: CI
 
 on:
+  push:
+    # branches to consider in the event; optional, defaults to all
+    branches:
+      - main
+
   # Triggers on any branch that opens a pull request.
   pull_request:
     branches:
