@@ -40,6 +40,11 @@ lint:
 	@source ${LOCAL_ENV_FILE} && mix format
 	@source ${LOCAL_ENV_FILE} && mix check.credo
 
+#💻 publish: @ Publishes a package on Hex
+publish: SHELL:=/bin/bash
+publish:
+	@mix hex.publish
+
 #📦 setup: @ Installs dependencies and set up database for dev and test envs
 setup: SHELL:=/bin/bash
 setup: setup.dev setup.test
