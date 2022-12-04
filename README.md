@@ -1,9 +1,9 @@
 # ExPomodoro
 
-**The `ex_pomodoro` program is an excuse to play around and experiment with the Elixir `Supervisor`, `DynamicSupervisor` and `GenServer` modules.**
+**The `ex_pomodoro` program is a simple set of functions that let developers manage pomodoro sessions withing their Elixir applications.**
 
 <h4 align="center">
-  An Elixir 🍅
+  An Elixir Pomodoro 🍅
 </h4>
 
 <p align="center" style="margin-top: 14px;">
@@ -34,6 +34,14 @@
   </a>
 </p>
 
+## Introduction
+
+> [About the Pomodoro technique](https://en.wikipedia.org/wiki/Pomodoro_Technique)
+
+**ExPomodoro** is an Elixir library that let developers easily manage pomodoro sessions by using a simple set of fuctions that can start a pomodoro session, pause a session, get the current session details.
+
+The motivation behind **ExPomodoro** development was initially driven by HTTP integrations in chat applications, such as [Mattermost](https://en.wikipedia.org/wiki/Mattermost) or [Slack](https://es.wikipedia.org/wiki/Slack_(software)), where one could create slash commands that interact to an HTTP server or create bots that send and receive notifications. This library includes only the domain logic for managing pomodoro sessions.
+
 ## Installation
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed
@@ -53,14 +61,14 @@ Otherwise it can be installed using the git remote url:
 def deps do
   [
     {:ex_pomodoro,
-     git: "git@github.com:sgobotta/ex_pomodoro.git", branch: "0.1.0"}
+     git: "git@github.com:sgobotta/ex_pomodoro.git", tag: "0.1.0"}
   ]
 end
 ```
 
 ## Setup
 
-ExPomodoro uses a `Supervisor` and `GenServer` to perform runtime operations for pomodoros. Add the `ExPomodoro` child spec to your application tree.
+**ExPomodoro** uses a `Supervisor` and `GenServer` to perform runtime operations for pomodoros. Add the `ExPomodoro` child spec to your application tree.
 
 *application.ex:*
 
@@ -80,8 +88,105 @@ end
 
 ## Usage
 
-**TODO: add usage instructions.**
+The `ExPomodoro` is the main module to interact with the APIs using a `Pomodoro` struct. There should be no need to use the rest of modules that handle runtime logic.
+
+A `Pomodoro` has four states: `:idle`, `:exercise`, `:break`, `:finished`
+
+Calling the APIs affect the state, and return an updated `Pomodoro` struct.
+
+All pomodoro functions are documented, check the [`ExPomodoro`](./lib/ex_pomodoro.ex) for more usage examples.
+
+### Start a pomodoro session
+
+A `%Pomodoro{}` is created with an `id` that must be unique between sessions. Starting a pomodoro with a non-unique id will cause no effect.
+
+This command will create a pomodoro with default options. The work time is `25` minutes by default, the break time is `5` and the number of periods is `4`.
+
+```elixir
+iex> ExPomodoro.start("some id")
+{:ok, %ExPomodoro.Pomodoro{
+  id: "some id",
+  activity: :exercise,
+  exercise_duration: 1_500_000,
+  break_duration: 300_000,
+  rounds: 4
+}}
+```
+
+Check the [`ExPomodoro`](./lib/ex_pomodoro.ex) module docs for examples with options.
+
+### Pause a pomodoro session
+
+A `%Pomodoro{}` can be paused by passing the `id`.
+
+```elixir
+iex> ExPomodoro.pause("some id")
+{:ok, %Pomodoro{
+  id: "some id",
+  activity: :idle,
+  current_duration: timeleft
+}}
+```
+
+### Get a pomodoro session
+
+A `%Pomodoro{}` can be obtained by passing the `id`.
+
+```elixir
+iex> ExPomodoro.get("some id")
+{:ok, %ExPomodoro.Pomodoro{id: "some id"}}
+```
+
+If the session does not exist, the function returns an error tuple.
+
+```elixir
+iex> ExPomodoro.get("some other id")
+{:error, :not_found}
+```
+
+A `Pomodoro` has a timeout of 90 minutes. if no interaction is made the `Pomodoro` will not be found and it's stats lost.
 
 ## Development
 
-**TODO: add usage instructions.**
+### Requirements
+
+* Elixir `1.11` or later. It should work on other versions but it isn't tested.
+
+> If you use `asdf` just run `asdf install` in the root repository to install the required **Elixir** version.
+
+### Installation and setup
+
+Install and compile dependencies and library.
+
+```bash
+make setup
+```
+
+Run format checks, credo, dialyzer and tests
+
+```bash
+make check
+```
+
+Run tests only
+
+```bash
+make test
+```
+
+Run test coverage
+
+```bash
+make test.cover
+```
+
+Run `make` to find a complete list of commands.
+
+## Future features
+
+* Allow callbacks on `GenServer` creation to support PubSub subscriptions, message passing, notifications and other real-time features.
+* Allow description for pomodoro periods
+
+## License
+
+[**GNU General Public License version 3**](LICENSE)
