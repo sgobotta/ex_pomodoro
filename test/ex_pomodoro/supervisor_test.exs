@@ -3,6 +3,7 @@ defmodule ExPomodoro.SupervisorTest do
   alias ExPomodoro.Helpers.DummyCallbackModule
 
   use ExUnit.Case
+  use ExPomodoro.SupervisorCase
 
   describe "#{ExPomodoro.Supervisor}" do
     alias ExPomodoro.PomodoroSupervisor
@@ -43,15 +44,6 @@ defmodule ExPomodoro.SupervisorTest do
   end
 
   defp valid_pid?(pid), do: is_pid(pid) and Process.alive?(pid)
-
-  defp configure_supervisor do
-    :ok =
-      Application.put_env(:ex_pomodoro, :callback_module, DummyCallbackModule)
-
-    on_exit(fn ->
-      :ok = Application.delete_env(:ex_pomodoro, :callback_module)
-    end)
-  end
 
   defp start_supervisor, do: start_supervised!(ExPomodoro.Supervisor)
 end
