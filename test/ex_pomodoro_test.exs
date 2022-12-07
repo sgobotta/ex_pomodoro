@@ -148,6 +148,9 @@ defmodule ExPomodoroTest do
     test "returns a struct when the pomodoro exists" do
       id = "some id"
       {:ok, %Pomodoro{id: ^id}} = do_start(id, [])
+
+      :timer.sleep(100)
+
       {:ok, %Pomodoro{id: ^id, activity: :idle}} = do_pause(id)
     end
 
