@@ -50,6 +50,7 @@ defmodule ExPomodoro.MixProject do
       {:excoveralls, "~> 0.15.0", only: [:test]},
       {:git_hooks, "~> 0.6.2", only: [:dev], runtime: false},
       {:mix_test_watch, "~> 1.0", only: [:dev], runtime: false},
+      {:patch, "~> 0.12.0", only: [:test]},
 
       # Documentation
       {:ex_doc, "~> 0.24", only: :dev, runtime: false}
