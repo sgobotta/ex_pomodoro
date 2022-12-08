@@ -177,9 +177,9 @@ defmodule ExPomodoro.PomodoroServer do
         "#{__MODULE__}.on_activity_change :: exercise -> break pid=#{inspect(self())}"
       )
 
-    :ok = on_activity_change(state)
-
     state = %{state | pomodoro: Pomodoro.break(pomodoro)}
+
+    :ok = on_activity_changed(state)
 
     {:noreply, schedule_timers(state)}
   end
@@ -194,9 +194,9 @@ defmodule ExPomodoro.PomodoroServer do
         "#{__MODULE__}._activity_change :: break -> idle pid=#{inspect(self())}"
       )
 
-    :ok = on_activity_change(state)
-
     state = %{state | pomodoro: Pomodoro.complete_round(pomodoro)}
+
+    :ok = on_activity_changed(state)
 
     {:noreply, schedule_timers(state)}
   end
@@ -217,12 +217,12 @@ defmodule ExPomodoro.PomodoroServer do
   # State helpers
   #
 
-  @spec on_activity_change(state()) :: :ok
-  defp on_activity_change(%{
+  @spec on_activity_changed(state()) :: :ok
+  defp on_activity_changed(%{
          callback_module: callback_module,
          pomodoro: %Pomodoro{} = pomodoro
        }),
-       do: callback_module.handle_activity_change(pomodoro)
+       do: callback_module.handle_activity_changed(pomodoro)
 
   @spec pause_pomodoro(state()) :: state()
   defp pause_pomodoro(
