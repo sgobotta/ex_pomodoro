@@ -4,7 +4,7 @@ defmodule ExPomodoro.MixProject do
   def project do
     [
       app: :ex_pomodoro,
-      version: "0.1.1",
+      version: "1.0.0",
       elixir: "~> 1.11",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -50,6 +50,7 @@ defmodule ExPomodoro.MixProject do
       {:excoveralls, "~> 0.15.0", only: [:test]},
       {:git_hooks, "~> 0.6.2", only: [:dev], runtime: false},
       {:mix_test_watch, "~> 1.0", only: [:dev], runtime: false},
+      {:patch, "~> 0.12.0", only: [:test]},
 
       # Documentation
       {:ex_doc, "~> 0.24", only: :dev, runtime: false}

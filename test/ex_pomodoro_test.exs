@@ -1,6 +1,7 @@
 defmodule ExPomodoroTest do
   @moduledoc false
 
+  use ExPomodoro.SupervisorCase
   use ExPomodoro.RuntimeCase, ratio: 1 / 32
   use ExUnit.Case
   doctest ExPomodoro, only: []
@@ -18,7 +19,11 @@ defmodule ExPomodoroTest do
   end
 
   describe "#{ExPomodoro}.start/2" do
-    setup [:setup_pomodoro_server]
+    setup(context) do
+      :ok = configure_supervisor()
+
+      setup_pomodoro_server!(context)
+    end
 
     test "starts a new #{ExPomodoro.PomodoroServer} child with no options" do
       id = "some id"
@@ -115,7 +120,11 @@ defmodule ExPomodoroTest do
   end
 
   describe "#{ExPomodoro}.get/1" do
-    setup [:setup_pomodoro_server]
+    setup(context) do
+      :ok = configure_supervisor()
+
+      setup_pomodoro_server!(context)
+    end
 
     test "returns a struct when the pomodoro exists" do
       id = "some id"
@@ -130,11 +139,18 @@ defmodule ExPomodoroTest do
   end
 
   describe "#{ExPomodoro}.pause/1" do
-    setup [:setup_pomodoro_server]
+    setup(context) do
+      :ok = configure_supervisor()
+
+      setup_pomodoro_server!(context)
+    end
 
     test "returns a struct when the pomodoro exists" do
       id = "some id"
       {:ok, %Pomodoro{id: ^id}} = do_start(id, [])
+
+      :timer.sleep(100)
+
       {:ok, %Pomodoro{id: ^id, activity: :idle}} = do_pause(id)
     end
 
@@ -144,7 +160,7 @@ defmodule ExPomodoroTest do
     end
   end
 
-  defp setup_pomodoro_server(%{} = _context) do
+  defp setup_pomodoro_server!(%{} = _context) do
     pid = start_supervised!(do_child_spec([]))
 
     assert valid_pid?(pid)

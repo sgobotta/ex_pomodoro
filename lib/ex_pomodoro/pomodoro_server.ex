@@ -17,6 +17,7 @@ defmodule ExPomodoro.PomodoroServer do
 
   @type state :: %{
           :activity_ref => reference() | nil,
+          :callback_module => module(),
           :id => Pomodoro.id(),
           :pomodoro => Pomodoro.t(),
           :previous_activity => Pomodoro.activity() | nil,
@@ -77,9 +78,11 @@ defmodule ExPomodoro.PomodoroServer do
   def initial_state(opts) do
     id = Keyword.fetch!(opts, :id)
     opts = Keyword.delete(opts, :id)
+    callback_module = Keyword.fetch!(opts, :callback_module)
 
     %{
       activity_ref: nil,
+      callback_module: callback_module,
       id: id,
       pomodoro: Pomodoro.new(id, opts),
       previous_activity: nil,
@@ -176,6 +179,8 @@ defmodule ExPomodoro.PomodoroServer do
 
     state = %{state | pomodoro: Pomodoro.break(pomodoro)}
 
+    :ok = on_activity_changed(state)
+
     {:noreply, schedule_timers(state)}
   end
 
@@ -186,10 +191,12 @@ defmodule ExPomodoro.PomodoroServer do
       ) do
     :ok =
       Logger.debug(
-        "#{__MODULE__}.on_activity_change :: break -> idle pid=#{inspect(self())}"
+        "#{__MODULE__}._activity_change :: break -> idle pid=#{inspect(self())}"
       )
 
     state = %{state | pomodoro: Pomodoro.complete_round(pomodoro)}
+
+    :ok = on_activity_changed(state)
 
     {:noreply, schedule_timers(state)}
   end
@@ -210,6 +217,14 @@ defmodule ExPomodoro.PomodoroServer do
   # State helpers
   #
 
+  @spec on_activity_changed(state()) :: :ok
+  defp on_activity_changed(%{
+         callback_module: callback_module,
+         pomodoro: %Pomodoro{} = pomodoro
+       }),
+       do: callback_module.handle_activity_changed(pomodoro)
+
+  @spec pause_pomodoro(state()) :: state()
   defp pause_pomodoro(
          %{
            pomodoro: %Pomodoro{activity: activity}
@@ -239,8 +254,10 @@ defmodule ExPomodoro.PomodoroServer do
     }
   end
 
-  # The pomodoro has finished a round and is requested to start a new round.
+  @spec resume_pomodoro(state()) :: state()
   defp resume_pomodoro(
+         # The pomodoro has finished a round and is requested to start a new
+         # one.
          %{
            activity_ref: nil,
            pomodoro: %Pomodoro{activity: :idle} = pomodoro,
@@ -279,12 +296,14 @@ defmodule ExPomodoro.PomodoroServer do
   # Schedule helpers
   #
 
+  @spec schedule_timers(state()) :: state()
   defp schedule_timers(state),
     do:
       state
       |> schedule_timeout()
       |> schedule_pomodoro()
 
+  @spec schedule_pomodoro(state()) :: state()
   defp schedule_pomodoro(
          %{
            activity_ref: nil,
@@ -392,6 +411,7 @@ defmodule ExPomodoro.PomodoroServer do
          | activity_ref: nil
        }
 
+  @spec schedule_timeout(state()) :: state()
   defp schedule_timeout(%{timeout: timeout, timeout_ref: nil} = state),
     do: %{state | timeout_ref: send_kill(timeout)}
 
@@ -406,8 +426,10 @@ defmodule ExPomodoro.PomodoroServer do
   # Send message helpers
   #
 
+  @spec send_kill(non_neg_integer()) :: reference()
   defp send_kill(time), do: Process.send_after(self(), :kill, time)
 
+  @spec send_activity_change(non_neg_integer()) :: reference()
   defp send_activity_change(time),
     do: Process.send_after(self(), :on_activity_change, time)
 end

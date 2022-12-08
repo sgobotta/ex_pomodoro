@@ -50,7 +50,7 @@ by adding `ex_pomodoro` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:ex_pomodoro, "~> 0.1.1"}
+    {:ex_pomodoro, "~> 1.0.0"}
   ]
 end
 ```
@@ -61,7 +61,7 @@ Otherwise it can be installed using the git remote url:
 def deps do
   [
     {:ex_pomodoro,
-     git: "git@github.com:sgobotta/ex_pomodoro.git", tag: "0.1.1"}
+     git: "git@github.com:sgobotta/ex_pomodoro.git", tag: "1.0.0"}
   ]
 end
 ```

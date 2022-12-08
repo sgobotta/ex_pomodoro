@@ -3,6 +3,7 @@ defmodule ExPomodoro.PomodoroSupervisorTest do
   Pomodoro Supervisor tests
   """
   use ExUnit.Case
+  use ExPomodoro.SupervisorCase
 
   describe "pomodoro_supervisor" do
     alias ExPomodoro.Pomodoro
@@ -13,6 +14,8 @@ defmodule ExPomodoro.PomodoroSupervisorTest do
     @supervisor_name :pomodoro_supervisor_test
 
     setup do
+      :ok = configure_supervisor()
+
       _registry_pid =
         start_supervised!({Registry, keys: :unique, name: Registry.Pomodoro})
 

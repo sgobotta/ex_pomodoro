@@ -37,7 +37,10 @@ defmodule ExPomodoro.PomodoroSupervisor do
       :ok
     end
 
-    args = Keyword.put(args, :on_start, on_start)
+    args =
+      args
+      |> Keyword.put(:on_start, on_start)
+      |> Keyword.put(:callback_module, fetch_from_config!(:callback_module))
 
     DynamicSupervisor.start_child(supervisor, {PomodoroServer, args})
   end
@@ -64,4 +67,7 @@ defmodule ExPomodoro.PomodoroSupervisor do
   def terminate_child(supervisor, pid) do
     DynamicSupervisor.terminate_child(supervisor, pid)
   end
+
+  @spec fetch_from_config!(atom()) :: any()
+  defp fetch_from_config!(key), do: Application.fetch_env!(:ex_pomodoro, key)
 end
