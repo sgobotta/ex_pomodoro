@@ -86,6 +86,36 @@ def start(_type, _args) do
 end
 ```
 
+Create a module that implements the following function. This is used to receive callbacks from the lib.
+
+*your_callback_module.ex:*
+
+```elixir
+defmodule MyApp.ExPomodoroClient do
+  @moduledoc false
+
+  require Logger
+
+  @doc """
+  Helper function to test callbacks from the Pomodoro Server.
+  """
+  @spec handle_activity_changed(any()) :: :ok
+  def handle_activity_changed(payload) do
+    :ok =
+      Logger.debug(
+        "#{__MODULE__}.handle_activity_changed payload=#{inspect(payload, pretty: true)}"
+      )
+  end
+end
+```
+
+*runtime.exs:*
+
+```elixir
+config :ex_pomodoro,
+  callback_module: MyApp.ExPomodoroClient
+```
+
 ## Usage
 
 The `ExPomodoro` is the main module to interact with the APIs using a `Pomodoro` struct. There should be no need to use the rest of modules that handle runtime logic.
