@@ -3,8 +3,11 @@ defmodule ExPomodoro.PomodoroServerTest do
   Pomodoro Server tests
   """
   use ExPomodoro.RuntimeCase, ratio: 1 / 32
+  use ExPomodoro.SupervisorCase
   use ExUnit.Case
+  use Patch
 
+  alias ExPomodoro.Helpers.DummyCallbackModule
   alias ExPomodoro.Pomodoro
   alias ExPomodoro.PomodoroServer
 
@@ -51,6 +54,7 @@ defmodule ExPomodoro.PomodoroServerTest do
   describe "#{PomodoroServer} activity" do
     test "changes when duration is completed" do
       # Setup
+      spy(DummyCallbackModule)
       args = [
         timeout: ratio(10),
         exercise_duration: ratio(7),
@@ -94,8 +98,10 @@ defmodule ExPomodoro.PomodoroServerTest do
 
       %Pomodoro{activity: :finished, current_round: 2} = do_get_state(pid)
 
+      assert_called(DummyCallbackModule.handle_activity_change(pomodoro), 4)
+
       # Teardown
-      :ok = sleep_with_ratio(10)
+      :ok = sleep_with_ratio(11)
       refute Process.alive?(pid)
     end
   end
@@ -186,6 +192,8 @@ defmodule ExPomodoro.PomodoroServerTest do
   describe "#{PomodoroServer}.resume/1" do
     test "continues the previously paused activity" do
       # Setup
+      spy(DummyCallbackModule)
+
       args = [
         timeout: ratio(10),
         exercise_duration: ratio(7),
@@ -286,6 +294,8 @@ defmodule ExPomodoro.PomodoroServerTest do
         current_round: 2
       } = do_get_state(pid)
 
+      assert_called(DummyCallbackModule.handle_activity_change(pomodoro), 4)
+
       # ------------------------------------------------------------------------
       # Teardown
       #
@@ -300,7 +310,12 @@ defmodule ExPomodoro.PomodoroServerTest do
     setup do
       %Pomodoro{id: id} = pomodoro = do_new([])
 
-      args = [id: id, on_start: fn _state -> :ok end]
+      args = [
+        id: id,
+        callback_module: DummyCallbackModule,
+        on_start: fn _state -> :ok end
+      ]
+
       pid = start_supervised!({PomodoroServer, args})
 
       %{pid: pid, pomodoro: pomodoro}
@@ -330,7 +345,8 @@ defmodule ExPomodoro.PomodoroServerTest do
       [
         id: pomodoro_id,
         on_start: fn _state -> :ok end,
-        timeout: Keyword.fetch!(opts, :timeout)
+        timeout: Keyword.fetch!(opts, :timeout),
+        callback_module: DummyCallbackModule
       ]
       |> Keyword.merge(opts)
 
@@ -381,6 +397,7 @@ defmodule ExPomodoro.PomodoroServerTest do
       # Setup
       expected_state = %{
         activity_ref: nil,
+        callback_module: DummyCallbackModule,
         id: pomodoro_id,
         pomodoro: pomodoro,
         previous_activity: nil,
@@ -494,7 +511,12 @@ defmodule ExPomodoro.PomodoroServerTest do
 
   defp initialise_state(%{} = _context) do
     %Pomodoro{id: id} = pomodoro = do_new()
-    args = [id: id]
+
+    args = [
+      id: id,
+      callback_module: DummyCallbackModule
+    ]
+
     state = PomodoroServer.initial_state(args)
 
     %{state: state, pomodoro: pomodoro}
