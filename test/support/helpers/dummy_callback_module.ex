@@ -6,11 +6,11 @@ defmodule ExPomodoro.Helpers.DummyCallbackModule do
   @doc """
   Helper function to test callbacks from the Pomodoro Server.
   """
-  @spec handle_activity_change(any()) :: :ok
-  def handle_activity_change(payload) do
+  @spec handle_activity_changed(any()) :: :ok
+  def handle_activity_changed(payload) do
     :ok =
       Logger.debug(
-        "#{__MODULE__}.on_activity_change payload=#{inspect(payload, pretty: true)}"
+        "#{__MODULE__}.handle_activity_changed payload=#{inspect(payload, pretty: true)}"
       )
   end
 end

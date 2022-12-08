@@ -55,6 +55,7 @@ defmodule ExPomodoro.PomodoroServerTest do
     test "changes when duration is completed" do
       # Setup
       spy(DummyCallbackModule)
+
       args = [
         timeout: ratio(10),
         exercise_duration: ratio(7),
@@ -98,7 +99,7 @@ defmodule ExPomodoro.PomodoroServerTest do
 
       %Pomodoro{activity: :finished, current_round: 2} = do_get_state(pid)
 
-      assert_called(DummyCallbackModule.handle_activity_change(pomodoro), 4)
+      assert_called(DummyCallbackModule.handle_activity_changed(pomodoro), 4)
 
       # Teardown
       :ok = sleep_with_ratio(11)
@@ -294,7 +295,7 @@ defmodule ExPomodoro.PomodoroServerTest do
         current_round: 2
       } = do_get_state(pid)
 
-      assert_called(DummyCallbackModule.handle_activity_change(pomodoro), 4)
+      assert_called(DummyCallbackModule.handle_activity_changed(pomodoro), 4)
 
       # ------------------------------------------------------------------------
       # Teardown

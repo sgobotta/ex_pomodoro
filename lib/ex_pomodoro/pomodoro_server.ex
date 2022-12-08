@@ -256,7 +256,8 @@ defmodule ExPomodoro.PomodoroServer do
 
   @spec resume_pomodoro(state()) :: state()
   defp resume_pomodoro(
-  # The pomodoro has finished a round and is requested to start a new round.
+         # The pomodoro has finished a round and is requested to start a new
+         # one.
          %{
            activity_ref: nil,
            pomodoro: %Pomodoro{activity: :idle} = pomodoro,
